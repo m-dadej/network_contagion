@@ -55,7 +55,3 @@ start = time.time()
 np.mean([contagion(1000, 1, 80, 20, 0.05, 0.01)[-1] for _ in range(100)])
 end = time.time()
 print(end - start)
-
-
-
-np.mean([contagion(100, 1, 80, 20, 0.05, 0.01)[end] for _ in 1:100])

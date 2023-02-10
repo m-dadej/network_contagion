@@ -8,7 +8,6 @@ using LinearAlgebra
 # potem chyba tez - usuwa sie im liab, zostaja A_M i nagle maja dodatni capital
 # - chyba trzeba zrobic tak ze pozostale aktywa po defaulcie sa dzielone na wierzycieli
 
-
 function make_asset_graph(n, tot_assets, integ)
     
     # alternative: A_ib = reduce(hcat,[shuffle(vcat([1 for _ in 1:z], [0 for _ in 1:(n-z)])) for _ in 1:n])'
@@ -95,19 +94,6 @@ function contagion2(n, init_b, exp_A_M, exp_A_ib, buffer_rate, integ)
     return defaults_t
 end
 
-
-
-sim_n_default = [mean([contagion2(1000, 1, 80, 20, 0.04, i)[end] for _ in 1:100]) for i in 0:0.001:0.015]
-
-filter(x -> x > 50, [contagion2(1000, 1, 80, 20, 0.04, 0.002)[end] for _ in 1:100])
-
-results = []
-n_sim = []
-
-length(contagion2(1000, 1, 80, 20, 0.04, 0.004)[end])
-
-s = 2 > 1 ? 3 : 4
-
 n = 1000
 sys_threshold = 0.05
 n_runs = 100
@@ -125,11 +111,6 @@ for z in 0:0.0005:0.011
     println("calculating contagion with z = ", z, " | extent: ", systematic, " | default prob: ", sum(runs .> n * sys_threshold) / n_runs)
 end
 
-plot(results)
-
-# the extent of contagion measures the fraction of banks which default conditional on contagion over the 5% threshold breaking out
-# mean systematic contagion
-
 results = (reduce(hcat, results[1:end])')
 results[:, 2] = results[:, 2] ./ 1000
 
@@ -137,17 +118,4 @@ contagion_plot = plot(results[:,1], results[:,2:3],  label=["Extent of contagion
 plot!(legend=:outerbottom, legendcolumns=2)
 savefig(contagion_plot, "research_proposal/contagionplot.png")
 
-0.001 * 1000
-
-filter(x -> x > 50, [50])
-x -> x^2 + 2x - 1
-
-plot(sim_n_default)
-
-1000 * 0.01
-mean([contagion(1000, 1, 80, 20, 0.05, 0.01)[end] for _ in 1:100])
-
-@time begin
-    mean([contagion2(1000, 1, 80, 20, 0.05, 10)[end] for _ in 1:100])
-end
 

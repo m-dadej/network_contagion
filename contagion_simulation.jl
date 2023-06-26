@@ -125,13 +125,13 @@ n_sim = 1
 σ_params = [0.0, 1.0, 2.0]
 Random.seed!(12)
 
-(length(σ_params)  * n_sim * 36) / 60 
 
-
-param_loop = function(n_sim, σ_params)
+@time begin
     σ_params .+= 0.001
     results = zeros(10)'
 
+    n_sim = 1
+    σ_params = [1.01]
     N     = 20 # n banks
     α     = 0.01 # liquidity requirement
     ω_n   = 1 # risk weight on non-liquid assets
@@ -160,16 +160,10 @@ param_loop = function(n_sim, σ_params)
             results = vcat(results, [σ_sim contagion(N, α, ω_n, ω_l, γ, τ, d, e, σ, ζ, exp_δ, σ_δ, r_n, σ_rn)'])
         end 
     end
-    return results
-end
-
-param_loop(1, [1.01,2.01])
-
-@time begin
-   
 end
 
 
+#184.735280
 
 [[mean(results[findall(results_extr[:,1] .== σ_param), var]) for σ_param in unique(results[:,1])] for var in 1:10]
 [[mean(results[findall(results[:,1] .== σ_param), var]) for σ_param in unique(results[:,1])] for var in 1:10]

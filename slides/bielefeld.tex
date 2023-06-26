@@ -1,0 +1,79 @@
+\documentclass{beamer}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usetheme{AnnArbor}
+
+\title{Risk aversion heterogeneity and contagion in
+endogenous financial networks}
+\bibliographystyle{apalike}
+\author{Mateusz Dadej}
+% write an affiliation
+
+\date{05-07-2023} % check the date of the talk
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Bank's balance sheet}
+
+    \begin{itemize}
+        \item The model build on works of Aldasoro et. al (2017) and Bluhm and Krahnen (2014). %\citet{bluhm} and \citet{aldasoro}
+        \item It consists of $N$ banks, each with the balance sheet satisfying following identity:
+        
+        \[c_i + \sum_{j=1}^{N}l_{i,j} + e_i = d_i + \sum_{j=1}^{N}b_{i,j} + q_i\]
+
+        \item Where asset side consists of cash $c$, external assets $e$ and interbank loans $l_{i,j}$. On the other side there are deposits $d$, interbank liabilities $l_{i,j}$ and equity $q_i$.
+        
+        % I guess we can set only $l_{i,j}$, and just reverse the indexation for the RHS
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Financial network representation}
+
+    \begin{itemize}
+        \item The double indexation represents the interconectedness among banks. $l_{i,j}$ is the value of debt claim from bank $i$ to bank $j$.
+        \item Therefore, $\sum_{j=1}^{N}l_{i,j}$ is a portfolio of claims of bank $i$
+        \item These assets are not necessarily limited to interbank loans, but can also include other contracts that posses credit risk.
+    \end{itemize}   
+
+\end{frame}
+
+\begin{frame}{Objective of banks}
+
+    \begin{itemize}
+        \item The profit function of banks depend on external and interbank assets and their return, respectively $r^e$ and $r^l$. As well as the cost of its funding, that depends on the default probability $\delta$ and loss given default $\zeta$.
+        
+        \[\pi_i = r_{i}^e e_i + r^l l_i - (\frac{1}{1 - \zeta \delta}) r^l b_i\]
+
+        \item The utility function of a bank is a standard CRRA function. With following expected value (obtained from taylor expansion):
+        
+        \[\mathbf{E}[U(\pi, \sigma_i, \sigma_\pi)] = \frac{\pi^{1-\sigma_i}}{1 - \sigma_i} - \frac{\sigma_i}{2} \pi_i^{-1-\sigma_i} \sigma_\pi\]
+
+        \item Where $\sigma_i$ is the risk aversion of bank $i$ and $\sigma_\pi$ is the variance of the profit of bank $i$, give with:
+        
+        \[ e^2 * \sigma_{r_i^e} - (b_i * r_l)^2 * \zeta^2 * (1 - (\zeta * \mathbf{\delta}))^(-4) * \sigma_\delta\]
+
+    \end{itemize}
+    
+\end{frame}
+
+
+% frame with references
+
+\begin{frame}{References}
+    \begin{itemize}
+        \item  Aldasoro, Iñaki and Delli Gatti, Domenico and Faia, Ester. "Bank networks: Contagion, systemic risk and prudential policy". Journal of Economic Behavior \& Organization, 2017, vol. 142, issue C, 164-188
+        \item Bluhm, Marcel, and Jan-Pieter Krahnen. "Systemic risk in an interconnected banking system with endogenous asset markets." Journal of Financial Stability 13 (2014): 75-94.
+    \end{itemize}
+
+\end{frame}
+    
+\end{document}
+

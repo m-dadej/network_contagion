@@ -54,16 +54,184 @@ endogenous financial networks}
 
         \item The utility function of a bank is a standard CRRA function. With following expected value (obtained from taylor expansion):
         
-        \[\mathbf{E}[U(\pi, \sigma_i, \sigma_\pi)] = \frac{\pi^{1-\sigma_i}}{1 - \sigma_i} - \frac{\sigma_i}{2} \pi_i^{-1-\sigma_i} \sigma_\pi\]
+        \[\mathbf{E}[U(\pi, \sigma_i, \sigma_\pi)] = \frac{\pi^{1-\sigma_i}}{1 - \sigma_i} - \frac{\sigma_i}{2} \pi^{-1-\sigma_i} \sigma_\pi\]
 
-        \item Where $\sigma_i$ is the risk aversion of bank $i$ and $\sigma_\pi$ is the variance of the profit of bank $i$, give with:
+        \item Where $\sigma_i$ is the risk aversion of bank $i$ and $\sigma_\pi$ is the variance of the profit of bank $i$, given by:
         
-        \[ e^2 * \sigma_{r_i^e} - (b_i * r_l)^2 * \zeta^2 * (1 - (\zeta * \mathbf{\delta}))^(-4) * \sigma_\delta\]
+        \[\sigma_\pi = e_i^2 \sigma_{r_i^e} - (b_i  r_l)^2  \zeta^2 (1 - \zeta \mathbf{E}[\delta])^{-4}  \sigma_\delta\]
 
     \end{itemize}
     
 \end{frame}
 
+\begin{frame}{Regulatory requirements}
+
+    \begin{itemize}
+        \item Banks have to satisfy the following capital requirements:
+        
+        \[\frac{c_i + l_i + e_i - d_i - b_i}{\omega_e e_i + \omega_l l_i} \geq (\gamma + \tau)\]
+
+        \item Where $\omega_e$ and $\omega_l$ are the weights of external and interbank assets, respectively. $\gamma$ is the minimum capital requirement and $\tau$ is the buffer.
+        
+        \item Additionally, banks are required to hold a minimum amount of liquid assets, relative to their deposits:
+        
+        \[c_i \geq \alpha \times d_i\]
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Bank's optimization problem}
+
+    Each bank is deciding on the structure 
+
+    \[\max_{c_i, e_i, l_i, b_i} \mathbf{E}[U(\pi_i, \sigma_i, \sigma_\pi)]\]
+
+    S.t.:
+
+    \[c_i + l_i + e_i = d_i + b_i + q_i\]
+
+    \[\frac{c_i + e_i + l_i - d_i - b_i}{\omega_e e_i + \omega_l l_i} \geq (\gamma + \tau)\]
+    
+    \[c_i \geq \alpha \times d_i\]
+        
+\end{frame}
+
+\begin{frame}{Interbank market}
+    
+    \begin{itemize}
+        \item Both the interest at which the banks lend and borrow is in the equilibrium, that satisfy the condition:
+        
+        \[\sum_{i}^{N} l_i^* = \sum_{i}^{N} b_i^*\]
+        
+        \item Where $*$ are optimal amount of lending and borrowing for each bank.
+        
+        \item The interest satisfying the condition is obtained Iteratively, using the tâtonnement process (next slide). 
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Tâtonnement process}
+    
+    \begin{algorithm}[H]
+        \caption{tatonnement process}\label{alg:cap}
+        \begin{algorithmic}
+        \State $r^l \gets 0.05$
+        \State $r^l_{max} \gets 0.1$
+        \State $r^l_{min} \gets 0$
+        \While{$|\Delta| < tol $}
+        \State $\Delta \gets \sum_{i}^{N} l_i^* - \sum_{i}^{N} b_i^*$
+        \If{$\Delta > 0$}
+            \State $r^l_{max} \gets r^l$
+            \State $r^l \gets \frac{r^l_{min} + r^l}{2}$
+        \ElsIf{$\Delta < 0$}
+            \State $r^l_{min} \gets r^l$
+            \State $r^l \gets \frac{r^l_{max} + r^l}{2}$
+        \EndIf
+        \EndWhile
+        \end{algorithmic}
+    \end{algorithm}
+
+\end{frame}
+
+\begin{frame}{Matching funds}
+
+Following linear program allows to match the funds among banks:
+
+\begin{equation}
+    \begin{aligned}
+    \max_{A^{ib}_i} \quad & \sum_{i}^{N} \sigma_i (A^{ib}_i)^T k_i\\
+    \textrm{s.t.} \quad & A^{ib}_{i,i} = 0 & \forall \; i \in N && \text{No self-lending}\\
+      & A^{ib}_i \geq 0 & \forall \; i \in N && \text{No short-selling}\\
+      & \sum_i^n A^{ib}_i = l_i & \forall \; i \in N && \text{Matching aggregated loans}\\
+      & \sum_j^n A^{ib}_j = b_j & \forall \; j \in N && \text{Matching aggregated borrowing}\\ 
+      & \frac{A^{ib}_i}{A^{\textbf{total}}_i} \leq \frac{1}{5} & \forall \; j \in N && \text{Maximum exposure limit}\\ 
+    \end{aligned}
+  \end{equation}
+    
+\end{frame}
+
+\begin{frame}{Exogenous shock to the system}
+
+    After setting the system in equilibrium, we introduce a shock in a form of a single random default. The process of defaulting is as follows:
+
+    \begin{itemize}
+        \item Defaulted bank repays the deposit with cash.
+        \item If there are remaining deposits to be repaid, the bank is calling its interbank loans.
+        \item Remainings from the called loans are distributed across interbank creditors.
+        \item the rest of the debt is written down.
+        \item Creditors with defaulted loans may have a negatie equity and are thus defaulting. 
+    \end{itemize}
+    
+\end{frame}
+
+\begin{frame}{Risk aversion heterogeneity}
+    
+    \begin{itemize}
+        \item We want to inspect the effect of risk aversion heterogeneity on the contagion. 
+        \item In other words, what is the effect on a system of a single bank with substantially different risk-apetite? 
+        \item In order to do it, the following procedure is applied:
+        
+        \begin{equation}
+            \begin{aligned}
+              \sigma_{i \neq \textbf{ss}} = 2 + \frac{\Delta_{\textbf{ss}}}{N-1} \\ 
+              \sigma_{\textbf{ss}} = 2 - \Delta_{\textbf{ss}}
+            \end{aligned}
+          \end{equation}
+
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Simulation parameters}
+
+    \begin{center}
+        \begin{tabular}{|c c|} 
+         \hline
+         Parameter & Value\\ [0.5ex] 
+         \hline\hline
+         $N$ & 20 \\ 
+         \hline
+         $\alpha$ & 0.01 \\
+         \hline
+         $\omega_e$ & 1 \\
+         \hline
+         $\omega_l$ & 0.2\\
+         \hline
+         $\tau$ & 0.01 \\ 
+         \hline
+         $\zeta$ & 0.6 \\ 
+         \hline
+         $E[\delta]$ & 0.05 \\
+         \hline
+         $\sigma_\delta$ & 0.03 \\ 
+         \hline
+         $r_e$ & $U(0.02, 0.15)$ \\ 
+         \hline
+         $V[r_e]$ & $\frac{1}{12}(\max(r^e) - \min(r^e))^2$ \\  [1ex] 
+         \hline
+        \end{tabular}
+      \end{center}
+    
+\end{frame}
+
+\begin{frame}{results}
+    
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{rrrrrr}
+      \hline
+     & $\Delta_{\textbf{ss}}$ & mean \# defaults & st. deviation of defaults & P(\# defaults $>$ 2) & \# simulations \\ 
+      \hline
+   & 0 & 1.68 & 1.21 & 0.19 &  95 \\ 
+   & 1 & 1.78 & 1.28 & 0.24 &  95 \\ 
+   & 2 & 1.80 & 1.30 & 0.27 &  95 \\ 
+   & 3 & 2.06 & 1.56 & 0.31 &  95 \\ 
+       \hline
+    \end{tabular}
+  \end{table}
+  
+\end{frame}
 
 % frame with references
 

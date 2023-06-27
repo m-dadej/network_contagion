@@ -1314,6 +1314,8 @@ INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/sansmathaccent/mathkerncmssi8.
 INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmssbx10.tfm
 INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmssbx10.tfm
 INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmssbx10.tfm
+INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmr8.tfm
+INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmr6.tfm
 OUTPUT bielefeld.nav
 OUTPUT bielefeld.toc
 OUTPUT bielefeld.snm
@@ -1323,6 +1325,7 @@ INPUT ./bielefeld.out
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb
+INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmss10.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmss12.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmss8.pfb

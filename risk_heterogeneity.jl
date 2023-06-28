@@ -9,15 +9,13 @@ using HiGHS
 using BenchmarkTools
 
 
-121.43 / 4.4851
-
 function exp_utility(exp_profit, σ_profit, σ)
     return ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
     #return (1/σ) - (1/σ) * exp(-σ*exp_profit) - (1/2) * σ * exp(-exp_profit * σ) * σ_profit
 end
 
-function profit(r_n, n, r_l, l, ζ, δ, b)
-    return (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b) #+ c * 0.01
+function profit(r_n, n, r_l, l, ζ, δ, b, c)
+    return (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b) + c * 0.02
 end
 
 function σ_profit(n, σ_rn, b, r_l, ζ, σ_δ, exp_δ)
@@ -60,7 +58,7 @@ function optim_allocation(d, α, ω_n, ω_l, γ, τ, e, r_n, r_l, ζ, exp_δ, σ
     set_silent(allocation)
     register(allocation, :σ_profit, 7, σ_profit; autodiff = true)
     register(allocation, :exp_utility, 3, exp_utility; autodiff = true)
-    register(allocation, :profit, 7, profit; autodiff = true)
+    register(allocation, :profit, 8, profit; autodiff = true)
     register(allocation, :equity_requirement, 7, equity_requirement; autodiff = true)
     @variable(allocation, c >= 0.1)
     @variable(allocation, n >= 0.1)
@@ -80,11 +78,11 @@ function optim_allocation(d, α, ω_n, ω_l, γ, τ, e, r_n, r_l, ζ, exp_δ, σ
     #(c + n + l - d - b)/(ω_n * n + ω_l * l)
     
     if σ == 0.00
-        @NLobjective(allocation, Max, profit(r_n, n, r_l, l, ζ, exp_δ, b))
+        @NLobjective(allocation, Max, profit(r_n, n, r_l, l, ζ, exp_δ, b, c))
     else
         # positive profit
-        @NLconstraint(allocation, profit(r_n, n, r_l, l, ζ, exp_δ, b) >= 0.1)
-        @NLobjective(allocation, Max, exp_utility(profit(r_n, n, r_l, l, ζ, exp_δ, b), σ_profit(n, σ_rn, b, r_l, ζ,σ_δ, exp_δ), σ))
+        @NLconstraint(allocation, profit(r_n, n, r_l, l, ζ, exp_δ, b, c) >= 0.1)
+        @NLobjective(allocation, Max, exp_utility(profit(r_n, n, r_l, l, ζ, exp_δ, b, c), σ_profit(n, σ_rn, b, r_l, ζ,σ_δ, exp_δ), σ))
     end
     
 
@@ -226,15 +224,17 @@ balance_check(bs[1], bs[2], bs[3], d[bank], bs[4], e[bank])
 #round(equity_requirement(bs[1], bs[2], bs[3], d[bank], bs[4], ω_n, ω_l)*100)
 optim_allocation(d[bank] , α, ω_n, ω_l, γ, τ, e[bank], r_n[bank]-0.05 , 0.1, ζ, exp_δ, σ_rn, σ_δ, 2.01)
 
-Random.seed!(12)
+Random.seed!(1)
 N     = 20 # n banks
 α     = 0.1 # liquidity requirement
 ω_n   = 1 # risk weight on non-liquid assets
 ω_l   = 0.2 # risk weight on liquid assets
 γ     = 0.08 # equity requirement ratio
 τ     = 0.01 # equity buffer
-d     = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
-e     = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
+d = [ 312.86,   71.54,  184.45,  682.65,  429.67,  192.09,  142.42, 105.5 ,  142.97,  232.6 ,  176.82,  419.89,  994.65,   53.56, 43.49,   63.92,   96.45, 1477.45,  672.12,   67.27]
+e = [19.67,   6.91,  21.73,  38.5 , 112.64,  11.8 ,   8.87,  15.55, 212.8 ,  61.92, 135.13,  30.43, 129.53,   9.21,  16.44,  12.98, 12.2 , 312.26,  97.85,  15.05]
+#d     = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
+#e     = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
 #d     = rand(Normal(500, 50), N)
 #e     = rand(Normal(40, 5), N)
 σ     = rand(Normal(2.5, 0), N) .+ 0.0001 # risk aversion
@@ -258,42 +258,8 @@ optim_vars = zeros(N, 5)
 for bank in 1:N 
     println("liczenie #", bank, " banku")
     optim_vars[bank, 1:4] .= optim_allocation(d[bank], α, ω_n, ω_l, γ, τ, e[bank], r_n[bank], eq_r_l, ζ, exp_δ, σ_rn, σ_δ, σ[bank])
-    optim_vars[bank, 5] = profit(r_n[bank], optim_vars[bank, 2], eq_r_l, optim_vars[bank, 3], ζ, exp_δ, optim_vars[bank, 4])
+    optim_vars[bank, 5] = profit(r_n[bank], optim_vars[bank, 2], eq_r_l, optim_vars[bank, 3], ζ, exp_δ, optim_vars[bank, 4], optim_vars[bank, 5])
 end
-
-[mean(optim_vars[:, i]) for i in 1:5]
-
-median(log.(max.(rand(Normal(3, 3), 20000), 0)))
-
-histogram(log.(max.(rand(Normal(3, 3), 20000), 0)))
-
-bank = 2
-test_l = optim_vars[bank, 3] -200
-test_b = optim_vars[bank, 4] -200
-
-#profit(r_n[bank], optim_vars[bank, 2], eq_r_l, test_l, ζ, exp_δ, test_b)
-
-exp_utility(profit(r_n[bank], optim_vars[bank, 2], eq_r_l, test_l, ζ, exp_δ, test_b), σ_profit(optim_vars[bank, 2], σ_rn, optim_vars[bank, 4], eq_r_l, ζ,σ_δ, exp_δ), σ[bank])
-
-equity_requirement(optim_vars[bank, 1], optim_vars[bank, 2], test_l, d[bank], test_b, ω_n, ω_l)
-
-bank = 2
-n = optim_vars[bank, 2] 
-b = optim_vars[bank, 4] 
-
-
-optim_vars[2, 2]^2 * σ_rn - (b * 0.05)^2 * ζ^2 * (1 - ζ * exp_δ)^(-4) * σ_δ
-
-71.58269004036984
- 497.92338765728516
- 271.2448941013971
- 272.9829101812877
-  29.579200438344394
-
-(1/(1 - ζ * exp_δ))
-
-mean(@. equity_requirement(optim_vars[:, 1], optim_vars[:, 2], optim_vars[:, 3], d, optim_vars[:, 4], ω_n, ω_l))
-mean(optim_vars[:,1] ./ d)
 
 length(findall(-0.001 .< balance_check(optim_vars[:,1], optim_vars[:,2], optim_vars[:, 3], d, optim_vars[:,4], e) .> 0.001)) > 0 && error("non-feasible")
 
@@ -316,6 +282,9 @@ sum(optim_vars[:, 3]) - sum(optim_vars[:, 4])
 k = @. equity_requirement(optim_vars[:, 1], optim_vars[:, 2], optim_vars[:, 3], d, optim_vars[:, 4], ω_n, ω_l)
 A = optim_vars[:,1] .+ optim_vars[:,2] .+ optim_vars[:,3]
 
+optim_vars[:, 3] ./ A
+
+mean(optim_vars[:, 4] ./ A)
 
 A_ib = fund_matching(optim_vars[:, 3], optim_vars[:, 4], σ, e, A, 0.25)
 

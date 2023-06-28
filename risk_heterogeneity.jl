@@ -9,6 +9,8 @@ using HiGHS
 using BenchmarkTools
 
 
+121.43 / 4.4851
+
 function exp_utility(exp_profit, σ_profit, σ)
     return ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
     #return (1/σ) - (1/σ) * exp(-σ*exp_profit) - (1/2) * σ * exp(-exp_profit * σ) * σ_profit

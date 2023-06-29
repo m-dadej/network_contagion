@@ -1,6 +1,8 @@
 using DelimitedFiles
 using CSV
 
+include("risk_heterogeneity.jl")
+
 function contagion(N, α, ω_n, ω_l, γ, τ, d, e, σ, ζ, exp_δ, σ_δ, r_n, σ_rn)
 
     params = equilibrium(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, N*2)

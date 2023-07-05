@@ -4,15 +4,17 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{hyperref}
-\usetheme{AnnArbor}
+\usetheme{Antibes}
 
 \title{Risk aversion heterogeneity and contagion in
 endogenous financial networks}
 \bibliographystyle{apalike}
 \author{Mateusz Dadej}
+\institute{University of Brescia}
 % write an affiliation
 
-\date{05-07-2023} % check the date of the talk
+\date[VLC 2023] % (optional)
+{Summer School: Risk and Uncertainty in Economics, Insurance and Finance, Bielefeld, 2021}
 
 \begin{document}
 
@@ -26,7 +28,7 @@ endogenous financial networks}
         \item The model build on works of Aldasoro et. al (2017) and Bluhm and Krahnen (2014). %\citet{bluhm} and \citet{aldasoro}
         \item It consists of $N$ banks, each with the balance sheet satisfying following identity:
         
-        \[c_i + \sum_{j=1}^{N}l_{i,j} + e_i = d_i + \sum_{j=1}^{N}b_{i,j} + q_i\]
+        \[c_i + \underbrace{\sum_{j=1}^{N}l_{i,j}}_{l_i} + e_i = d_i + \underbrace{\sum_{j=1}^{N}b_{i,j}}_{b_i} + q_i\]
 
         \item Where asset side consists of cash $c$, external assets $e$ and interbank loans $l_{i,j}$. On the other side there are deposits $d$, interbank liabilities $l_{i,j}$ and equity $q_i$.
         
@@ -50,18 +52,52 @@ endogenous financial networks}
     \begin{itemize}
         \item The profit function of banks depend on external and interbank assets and their return, respectively $r^e$ and $r^l$. As well as the cost of its funding, that depends on the default probability $\delta$ and loss given default $\zeta$.
         
-        \[\pi_i = r_{i}^e e_i + r^l l_i - (\frac{1}{1 - \zeta \delta}) r^l b_i\]
+        \[\pi_i = r_{i}^e e_i + r^l l_i - \left(\frac{1}{1 - \zeta \delta}\right) r^l b_i\]
 
-        \item The utility function of a bank is a standard CRRA function. With following expected value (obtained from taylor expansion):
+        \item The utility function of a bank is a standard CRRA function
         
-        \[\mathbf{E}[U(\pi, \sigma_i, \sigma_\pi)] = \frac{\pi^{1-\sigma_i}}{1 - \sigma_i} - \frac{\sigma_i}{2} \pi^{-1-\sigma_i} \sigma_\pi\]
+        \[U(\pi_i, \sigma_i) = \frac{\pi^{1-\sigma}}{1 - \sigma}\]
 
-        \item Where $\sigma_i$ is the risk aversion of bank $i$ and $\sigma_\pi$ is the variance of the profit of bank $i$, given by:
-        
-        \[\sigma_\pi = e_i^2 \sigma_{r_i^e} - (b_i  r_l)^2  \zeta^2 (1 - \zeta \mathbf{E}[\delta])^{-4}  \sigma_\delta\]
 
     \end{itemize}
     
+\end{frame}
+
+\begin{frame}{Objective of banks - expected utility}
+
+    \[U(\pi_i) \approx U(E[\pi_i]) + U'((\pi_i - E[\pi_i])) + \frac{1}{2} U''((\pi_i - E[\pi_i])^2)\]
+
+Taking the expected value of both sides:
+
+\begin{equation}
+  \begin{aligned}
+    E[U(\pi_i)] &\approx E[U(E[\pi_i])] + U'(E[(\pi_i - E[\pi_i])]) + \frac{1}{2} U''(E[(\pi_i - E[\pi_i])^2]) \\
+     &\approx U(E[\pi_i]) + \frac{1}{2} U''(\pi_i) \sigma^2_{\pi}
+  \end{aligned}\nonumber
+\end{equation}
+
+The expected value of utility is following:
+
+\[ E[U(\pi, \sigma_i, \sigma_\pi)] = \frac{\pi^{1-\sigma_i}}{1 - \sigma_i} - \frac{\sigma_i}{2} \pi^{-1-\sigma_i} \sigma_\pi\]
+
+\end{frame}
+
+\begin{frame}{Objective of banks - profit variance}
+    Where $\sigma_i$ is the risk aversion of bank $i$ and $\sigma_\pi$ is the variance of the profit of bank $i$, given by:
+        
+    \begin{equation}
+        \begin{aligned}
+          \sigma^2_\pi &= V[r^e_i e_i + r^l l_i - \frac{1}{1 - \zeta \delta_i} r^l b_i] \\
+          &= e_i^2 \sigma^2_{r^e_i} - (b_i r^l)^2 V[\frac{1}{1 - \zeta \delta_i}] + 2 e_i r^l \textbf{Cov}[r^e_i, \frac{1}{1 - \zeta \delta_i}]
+        \end{aligned}\nonumber
+      \end{equation}
+      
+      Taking the first order Taylor approximation around expected value of $\delta_i$:
+      
+      \[V[\frac{1}{1 - \zeta \delta_i}] = \zeta^2 (1 - \zeta E[\delta_i])^{-4} \sigma^2_{\delta_i}\]
+
+      \[\sigma_\pi = e_i^2 \sigma_{r_i^e} - (b_i  r_l)^2  \zeta^2 (1 - \zeta \mathbf{E}[\delta])^{-4}  \sigma_\delta\]
+      
 \end{frame}
 
 \begin{frame}{Regulatory requirements}
@@ -215,20 +251,24 @@ Following linear program allows to match the funds among banks:
     
 \end{frame}
 
-\begin{frame}{results}
+\begin{frame}{Simulation results}
     
 \begin{table}[ht]
     \centering
-    \begin{tabular}{rrrrrr}
+    \begin{tabular}{rrrrr}
       \hline
-     & $\Delta_{\textbf{ss}}$ & mean \# defaults & st. deviation of defaults & P(\# defaults $>$ 2) & \# simulations \\ 
+     & $\Delta_{\textbf{ss}}$ & mean \# defaults &  P(\# defaults $>$ 2) \\ 
       \hline
-   & 0 & 1.68 & 1.21 & 0.19 &  95 \\ 
-   & 1 & 1.78 & 1.28 & 0.24 &  95 \\ 
-   & 2 & 1.80 & 1.30 & 0.27 &  95 \\ 
-   & 3 & 2.06 & 1.56 & 0.31 &  95 \\ 
+   & 0 & 1.68 & 0.19\\ 
+   & 0.5 & 1.71 & 0.2\\ 
+   & 1 & 1.78 & 0.24\\ 
+   & 1.5 & 1.78 & 0.25\\ 
+   & 2 & 1.80 & 0.27 \\ 
+   & 2.5 & 1.93 & 0.28\\ 
+   & 3 & 2.06 & 0.31\\ 
        \hline
     \end{tabular}
+    \caption{results based on $7 \times 300$ simulations}
   \end{table}
   
 \end{frame}
@@ -242,6 +282,7 @@ Following linear program allows to match the funds among banks:
     \end{itemize}
 
 \end{frame}
+
     
 \end{document}
 

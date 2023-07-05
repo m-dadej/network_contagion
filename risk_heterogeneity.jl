@@ -1,12 +1,11 @@
 using Random
 using Distributions
-using Plots
+#using Plots
 using LinearAlgebra
 using JuMP
 using Ipopt
 using NLopt
 using HiGHS
-using BenchmarkTools
 
 
 function exp_utility(exp_profit, σ_profit, σ)

@@ -14,7 +14,7 @@ endogenous financial networks}
 % write an affiliation
 
 \date[VLC 2023] % (optional)
-{Summer School: Risk and Uncertainty in Economics, Insurance and Finance, Bielefeld, 2021}
+{Presentation of the research activity to the Scientific Board, 2023}
 
 \begin{document}
 
@@ -56,7 +56,7 @@ endogenous financial networks}
 
         \item The utility function of a bank is a standard CRRA function
         
-        \[U(\pi_i, \sigma_i) = \frac{\pi^{1-\sigma}}{1 - \sigma}\]
+        \[U(\pi_i, \sigma_i) = \frac{\pi^{1-\sigma_i}}{1 - \sigma_i}\]
 
 
     \end{itemize}
@@ -117,7 +117,7 @@ The expected value of utility is following:
 
 \end{frame}
 
-\begin{frame}{Bank's optimization problem}
+\begin{frame}{Banks optimization problem}
 
     Each bank is deciding on the structure 
 
@@ -212,8 +212,8 @@ Following linear program allows to match the funds among banks:
             \begin{aligned}
               \sigma_{i \neq \textbf{ss}} = 2 + \frac{\Delta_{\textbf{ss}}}{N-1} \\ 
               \sigma_{\textbf{ss}} = 2 - \Delta_{\textbf{ss}}
-            \end{aligned}
-          \end{equation}
+            \end{aligned}\nonumber
+        \end{equation}
 
     \end{itemize}
 
@@ -221,10 +221,11 @@ Following linear program allows to match the funds among banks:
 
 \begin{frame}{Simulation parameters}
 
+    \begin{table}
     \begin{center}
         \begin{tabular}{|c c|} 
          \hline
-         Parameter & Value\\ [0.5ex] 
+         Parameter & Value\\ [0.3ex] 
          \hline\hline
          $N$ & 20 \\ 
          \hline
@@ -238,16 +239,53 @@ Following linear program allows to match the funds among banks:
          \hline
          $\zeta$ & 0.6 \\ 
          \hline
-         $E[\delta]$ & 0.05 \\
+         $E[\delta]$ & 0.005 \\
          \hline
-         $\sigma_\delta$ & 0.03 \\ 
+         $\sigma_\delta$ & 0.003 \\ 
          \hline
-         $r_e$ & $U(0.02, 0.15)$ \\ 
+         $r_e$ & $U(0, 0.15)$ \\ 
          \hline
          $V[r_e]$ & $\frac{1}{12}(\max(r^e) - \min(r^e))^2$ \\  [1ex] 
          \hline
         \end{tabular}
-      \end{center}
+    \end{center}
+
+    \
+
+    Parameters were based on bank level balance sheet data (2019) from Orbis
+
+\end{table}
+    
+    % \begin{itemize}
+    %     \item The deposit and equity is taken from the balance sheet data of top 20 banks from the USA.
+    % \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Reproducing empirical data}
+
+ 
+\begin{table}
+    \begin{center}
+        \begin{tabular}{|c | c | c|} 
+         \hline
+         Parameter & empirical value  & model value\\ [0.3ex] 
+         \hline\hline
+         $cash / deposits$ & $5.56\%$ &  $3.56\%$ \\ 
+         \hline
+         $\text{interbank lend.} / captial$ & $138.5\%$ &  $159.3\%$ \\
+         \hline
+         $\text{interbank lend.} / A$ & $15.29\%$ &  $22.17\%$ \\
+         \hline
+         $\text{capital} / A$ & $7.2\%$ &  $9.23\%$ \\
+         \hline
+         Average degree & NA & $2.8$ \\
+         \hline
+         $r^l$ & $-0.32\%$ & $2.24\%$ \\  [1ex] 
+         \hline
+        \end{tabular}
+    \end{center}
+\end{table}
     
 \end{frame}
 
@@ -276,9 +314,15 @@ Following linear program allows to match the funds among banks:
 % frame with references
 
 \begin{frame}{References}
+
+    Thank you!
+    
+    \
+
     \begin{itemize}
         \item  Aldasoro, Iñaki and Delli Gatti, Domenico and Faia, Ester. "Bank networks: Contagion, systemic risk and prudential policy". Journal of Economic Behavior \& Organization, 2017, vol. 142, issue C, 164-188
         \item Bluhm, Marcel, and Jan-Pieter Krahnen. "Systemic risk in an interconnected banking system with endogenous asset markets." Journal of Financial Stability 13 (2014): 75-94.
+        \item Regulation No 575/2013 of the European Parliament and of the Council of 26 June 2013 (Basel III implementation in Europe)
     \end{itemize}
 
 \end{frame}

@@ -230,6 +230,8 @@ unique(results[:,1])
 #10
 # σ |  n_default | eq_r_l | mean liq | mean l | mean A_ib / A | mean(l / A) | mean eq_req | sd eq_req | mean(n / A)
 
+mean(results_extr[:,3])
+
 results[5] = mean(optim_vars[:, 5] ./ A)
 results[6] = mean(optim_vars[:,3] ./ A)
 results[7] = mean(k)

@@ -1,0 +1,84 @@
+\documentclass{article}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[margin=1in]{geometry}
+\hypersetup{
+colorlinks=false,
+pdfborder={0 0 0},
+}
+\fontsize{5}{12}\selectfont
+\bibliographystyle{apalike}
+\title{Contagion in Endogenous Financial Networks - Brief research proposal}
+\author{Mateusz Dadej, University of Brescia, Italy}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+The work is based on works of Aldasoro et. al (2017) and Bluhm and Krahnen (2014). The model consists of $N$ banks each solving the following optimization problem:
+
+\[\max_{c_i, e_i, l_i, b_i} \mathbf{E}[U(\pi_i, \sigma_i, \sigma_\pi)] = \frac{\pi^{1-\sigma_i}}{1 - \sigma_i} - \frac{\sigma_i}{2} \pi^{-1-\sigma_i} \sigma_\pi\]
+
+S.t.:
+
+\[c_i + \sum_{j=1}^{N}l_{i,j} + e_i = d_i + \sum_{j=1}^{N}b_{i,j} + q_i\]
+
+\[\frac{c_i + e_i + l_i - d_i - b_i}{\omega_e e_i + \omega_l l_i} \geq (\gamma + \tau)\]
+
+\[c_i \geq \alpha \times d_i\]   
+
+Where $\pi$ are profits, $\sigma_i$ is risk aversion and $\sigma_{\pi}$ is profit variance. The objective function of each of the banks is expected utility (CRRA) minus the term adjusting for the risk of the bank's balance sheet. Essentially, making this a mean-variance optimization. The function is obtained from second order expansion around the expected value of profit.
+The first constraint is balance sheet identity, where the variables on the L.H.S. are cash $c_i$, portfolio of loans $l_{i,j}$, external assets (e.g. mortgages). Whereas on R.H.S. there are deposits $d_i$, borrowings $b_{i,j}$ and capital $q_i$. Last two constraints are regulatory requirements specifying minimum capital adequacy and liquidity.
+
+\
+
+After each of the banks decides their optimal balance sheet composition, the total amount of aggregated loans and borrowings is calculated. Since the banks are not cooperating during optimization step, the amount of aggregated loans and borrowing is different. The clearing process is done with algorithm that iteratively changes interbank interest rate until the aggregated loans and borrowings are equal.
+
+\
+
+After finding the equilibrium interest rate, the funds are matched between the banks (e.g. bank $j$ provide loan to bank $i$). Simple linear programming exercise matches funds, so that more risk averse banks provide loans to less risky banks (risk is measured by capital adequacy) subject to standard constraints like no-short selling and maximum exposure limit.
+
+Once the system is set we introduce an exogenous shock in the form of a single default. Defaulted banks 1) repay deposit with cash, 2) calls their loans and repays depositors, 3) repays their interbank creditors. If the bank does not have enough funds, the interbank loans are written down, further spreading credit risk. The process is repeated until all the banks are solvent.
+
+The model is general enough to provide insight to range of research questions but currently the focus is on following: what is the effect on system stability/fragility of a single bank with substantially different risk-appetite? (risk aversion heterogeneity) Is there a phenomena analogical to the "super spreaders" from epidemiology?
+
+\
+
+In order to answer this question I ran simulations where a single bank is assigned a different risk aversion parameter, while holding the average of risk aversion across banks constant.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{rrrrr}
+      \hline
+     & $\Delta_{\textbf{ss}}$ & mean number of defaults &  P(Number of defaults $>$ 2) \\ 
+      \hline
+   & 0 & 1.68 & 0.19\\ 
+   & 0.5 & 1.71 & 0.2\\ 
+   & 1 & 1.78 & 0.24\\ 
+   & 1.5 & 1.78 & 0.25\\ 
+   & 2 & 1.80 & 0.27 \\ 
+   & 2.5 & 1.93 & 0.28\\ 
+   & 3 & 2.06 & 0.31\\ 
+       \hline
+    \end{tabular}
+    \caption{results based on $7 \times 300$ simulations}
+\end{table}
+
+The results shows that the more aggressive "super spreader" is, the wors outcome of system contagion. 
+
+\
+
+\textbf{References}
+
+\begin{itemize}
+    \item  Aldasoro, Iñaki and Delli Gatti, Domenico and Faia, Ester. "Bank networks: Contagion, systemic risk and prudential policy". Journal of Economic Behavior \& Organization, 2017, vol. 142, issue C, 164-188
+    \item Bluhm, Marcel, and Jan-Pieter Krahnen. "Systemic risk in an interconnected banking system with endogenous asset markets." Journal of Financial Stability 13 (2014): 75-94.
+\end{itemize}
+
+
+\end{document}

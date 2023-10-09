@@ -60,7 +60,10 @@ res = model_fit(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_
 
 res = hcat(res, res[:,1] .+ res[:, 2] .+ res[:, 3])
 
-mean(res[:, 1] ./ res[:, 6])
+
+mean((res[:, 6] .- res[:, 4] .- d) ./ res[:, 3])
+
+
 
 mean(res[:, 2] ./ res[:, 6])
 

@@ -1,3 +1,5 @@
+using Pkg
+Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS"])
 using Random
 using Distributions
 #using Plots

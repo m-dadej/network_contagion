@@ -8,7 +8,7 @@ using JuMP
 using Ipopt
 using NLopt
 using HiGHS
-
+using Printf
 
 mutable struct Bank{V <: AbstractFloat}
     id::Int64
@@ -37,8 +37,16 @@ Base.@kwdef mutable struct BankSystem{V <: AbstractFloat}
     const σ_δ::V
     banks::Vector{Bank} = Bank[]
     r_l::V = 0.0
+    A_ib::Matrix{V} = Matrix{Float64}(undef, 0, 0)
 end    
 
+# show table of c, n, l, b of eery bank with rounding
+function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
+    print(io, "Bank | c | n | l | b | e\n")
+    for bank in banks
+        print(io, bank.id, " | ", round(bank.c), " | ", round(bank.n), " | ", round(bank.l), " | ", round(bank.b), " | ", round(bank.e), "\n")
+    end
+end    
 
 exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
 
@@ -49,8 +57,8 @@ function exp_utility(bank::Bank, bank_system::BankSystem)
     #return (1/σ) - (1/σ) * exp(-σ*exp_profit) - (1/2) * σ * exp(-exp_profit * σ) * σ_profit
 end
 
-profit(r_n, n, r_l, l, ζ, δ, b, c) = (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b) + c * 0.02
-profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r_l * bank.l) - ((1 /(1 - bank_system.ζ * bank_system.δ)) * bank_system.r_l * bank.b) + bank.c * 0.02   
+profit(r_n, n, r_l, l, ζ, δ, b, c) = (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b)
+profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r_l * bank.l) - ((1 /(1 - bank_system.ζ * bank_system.δ)) * bank_system.r_l * bank.b)  
 
 σ_profit(n, σ_rn, b, r_l, ζ, σ_δ, exp_δ) =  n^2 * σ_rn - (b * r_l)^2 * ζ^2 * (1 - (ζ * exp_δ))^(-4) * σ_δ
 σ_profit(bank::Bank, bank_system::BankSystem) = bank.n^2 * bank_system.σ_rn - (bank.b * bank_system.r_l)^2 * bank_system.ζ^2 * (1 - (bank_system.ζ * bank_system.exp_δ))^(-4) * bank_system.σ_δ
@@ -58,8 +66,10 @@ profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r
 balance_check(c, n, l, d, b, e) = (c + n + l) - (d + b + e)
 balance_check(bank::Bank) = (bank.c + bank.n + bank.l) - (bank.d + bank.b + bank.e)
 
+
 equity_requirement(c, n, l, d, b, ω_n, ω_l) = (c + n + l - d - b)/(ω_n * n + ω_l * l)
 equity_requirement(bank::Bank, bank_system::BankSystem) = (bank.c + bank.n + bank.l - bank.d - bank.b)/(bank_system.ω_n * bank.n + bank_system.ω_l * bank.l)
+equity_requirement(bank_system::BankSystem) = [(bank.c + bank.n + bank.l - bank.d - bank.b)/(bank_system.ω_n * bank.n + bank_system.ω_l * bank.l) for bank in bank_system.banks]
 
 
 function optim_allocation_msg(model)
@@ -145,10 +155,10 @@ function populate!(bank_sys::BankSystem;
                    σ = Vector{Float64}([]), 
                    r_n = Vector{Float64}([]))
 
-    d = isempty(d) ? rand(Normal(500, 50), N) : d
-    e = isempty(e) ? rand(Normal(90, 5), N) : e
+    d = isempty(d) ? rand(Normal(500, 80), N) : d
+    e = isempty(e) ? rand(Normal(90, 10), N) : e
     σ = isempty(σ) ? rand([1.5], N) : σ
-    r_n = isempty(r_n) ? rand(Uniform(0.01, 0.1), N) : r_n
+    r_n = isempty(r_n) ? rand(Uniform(0.03, 0.15), N) : r_n
     σ_rn  = (1/12).*(maximum(r_n) - minimum(r_n)).^2
 
     for i in 1:N
@@ -265,15 +275,6 @@ function get_market_balance(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_
     return sum(optim_vars[:,3]) - sum(optim_vars[:, 4])
 end    
 
-bank_sys = BankSystem(α = 0.01, ω_n = 1.0, ω_l = 0.2, γ = 0.08, τ = 0.01, ζ = 0.6, exp_δ = 0.005, σ_δ = 0.003)
-
-populate!(bank_sys, N = 5)
-
-
-equilibrium!(bank_sys)
-
-get_market_balance(bank_sys)
-
 function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20)
 
     tol = tol < 0 ? length(bank_sys.banks)*2 : tol
@@ -333,6 +334,15 @@ function equilibrium(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n
     return param_space
 end
 
+function fund_matching!(bank_sys::BankSystem, max_expo = 0.1)
+    A = [bank.c + bank.n + bank.l for bank in bank_sys.banks]
+    l = [bank.l for bank in bank_sys.banks]
+    b = [bank.b for bank in bank_sys.banks]
+    σ = [bank.σ for bank in bank_sys.banks]
+    k = equity_requirement(bank_sys)
+    bank_sys.A_ib = fund_matching(l, b, σ, k, A, max_expo)
+end
+
 function fund_matching(l, b, σ, k, A, max_expo)
     
     N = size(l)[1]
@@ -366,6 +376,23 @@ function fund_matching(l, b, σ, k, A, max_expo)
     JuMP.optimize!(fund_matching_optim)
 
     return value.(A_ib)
+end
+
+function adjust_imbalance!(bank_sys)
+    imbalance = get_market_balance(bank_sys)
+
+    println("max liquidity shortfall: $(minimum(round.([bank.c - (bank_sys.α * bank.d) for bank in bank_sys.banks])))")
+    println("imbalance: $(round.(imbalance))")
+    
+    if imbalance > 0
+        borrowers = findall([bank.b for bank in bank_sys.banks] .> 1)
+        [bank.b += imbalance / length(borrowers) for bank in bank_sys.banks[borrowers]]
+        [bank.c += imbalance / length(borrowers) for bank in bank_sys.banks[borrowers]]    
+    elseif imbalance < 0
+        lenders = findall([bank.l for bank in bank_sys.banks] .> 1)
+        [bank.l -= imbalance / length(lenders) for bank in bank_sys.banks[lenders]]
+        [bank.d -= imbalance / length(lenders) for bank in bank_sys.banks[lenders]]
+    end 
 end
 
 function clearing_vector(A_ib, c, n)

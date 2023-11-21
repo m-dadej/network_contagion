@@ -5,6 +5,128 @@ using CSV
 
 include("risk_heterogeneity.jl")
 
+bank_sys = BankSystem(α = 0.05,
+                      ω_n = 1.0, 
+                      ω_l = 0.2, 
+                      γ = 0.07,
+                      τ = 0.01, 
+                      ζ = 0.6, 
+                      exp_δ = 0.004, 
+                      σ_δ = 0.002)
+
+N = 10                      
+populate!(bank_sys, N = N, r_n = rand(Uniform(0.0, 0.08), N), σ = rand([1.5], N))
+
+isempty(bank_sys.banks) ? populate!(bank_sys) : nothing
+equilibrium!(bank_sys)
+adjust_imbalance!(bank_sys)
+
+fund_matching!(bank_sys, 0.2)
+
+balance_check.(bank_sys.banks)
+
+equity_requirement(bank_sys) .- (bank_sys.γ .+ bank_sys.τ)
+
+
+shocked_bank = rand(1:N)
+bank_sys.banks[shocked_bank].e = 0
+bank_sys.banks[shocked_bank].n = 0
+
+#optim_vars[shocked_bank, 1] .= 0
+
+
+#(c + n + l) - (d + b + e)
+
+# OD TEGO MOMENTU 3 I 4 W optim_vars sa depreciated, uzywaj A_ib a jak chcesz zagregowane watosci to:
+# l = sum(A_ib, dims=2) = optim_vars[:, 3]
+# b = sum(A_ib, dims=1) = optim_vars[:, 4]
+
+
+# co jak bank upadł, calluje debt ale debtors nie maja wystarczajaco hajsu?
+e_t = [0, sum([bank.e for bank in bank_sys.banks])]
+# clearing loop until there is no defaulted bank with any liquid assets (cash and IB)
+#  any(e .<= 0 .&& (sum(A_ib, dims=2) .> 0 .|| optim_vars[:, 1] .> 0))
+
+findall(x -> x.e <= 0, bank_sys.banks)
+
+findall(x->(x<4)&&(x>1),A)
+
+sum(bank_sys.A_ib, dims=2)
+[bank.l for bank in bank_sys.banks]
+
+while e_t[end-1] != e_t[end]
+
+    # identify defaults (negative capital)
+    defaults = findall(x -> x.e <= 0, bank_sys.banks)
+    
+    for default in defaults
+        bank_sys.banks[default].d .-= bank_sys.banks[default][1].c
+        bank_sys.banks[default].c = 0
+    end
+
+    calling_banks = findall(x -> x.e <= 0 && (x.l > 0 || x.c > 0), bank_sys.banks)
+    
+    for call_id in calling_banks
+
+        debtors = findall(bank_sys.A_ib[call_id, :] .> 0)
+        # debtors repay either what they owe or have
+
+
+        bank_sys.banks[call_id].d += sum(min.(bank_sys.A_ib[call_id, :], [bank_sys.banks[debtor][1].c for debtor in debtors])) # + cash
+    
+        repayment = min.(bank_sys.A_ib[call_id, :], [bank_sys.banks[debtor][1].c for debtor in debtors])
+        
+        [bank_sys.banks[debtor].c -= repayment[i] for (i, debtor) in enumerate(debtors)]
+        bank_sys.A_ib[call_id,:] .-= repayment # -IB assets
+
+    end
+
+    # stage 1: calling for liquidity
+    for call_id in calling_banks
+
+        debtors = findall(A_ib[call_id, :] .> 0)
+        # debtors repay either what they owe or have
+        d[call_id] += sum(min.(A_ib[call_id, :], optim_vars[:,1])) # + cash
+        repayment = min.(A_ib[call_id, :], optim_vars[:,1])
+        optim_vars[:,1] .-= repayment
+        A_ib[call_id,:] .-= repayment # -IB assets
+
+    end
+
+    # stage 2: writing down remaining IB liabilities
+    e .-= sum(A_ib[:, defaults], dims = 2)
+    A_ib[:, defaults] .= 0
+    push!(e_t, sum(e))
+end
+
+
+
+function contagion!(bank_sys::BankSystem)
+    
+    isempty(bank_sys.banks) ? populate!(bank_sys) : nothing
+    equilibrium!(bank_sys)
+
+    # imbalance adjustment 
+    imbalance = get_market_balance(bank_sys)
+
+    [bank.c - (bank_sys.α * bank.d) for bank in bank_sys.banks]
+
+    println("any banks with not enoug liq: ", round.((optim_vars[:,1] .- (α .* d))))
+    println("imbalance: ", round.(sum(optim_vars[:,3]) - sum(optim_vars[:,4])))
+
+    if imbalance > 0
+        borrowers = findall(optim_vars[:,4] .> 0.0001)
+        optim_vars[borrowers, 4] .+= imbalance ./ length(borrowers)
+        optim_vars[borrowers, 1] .+= imbalance ./ length(borrowers)
+    elseif imbalance < 0
+        lenders = findall(optim_vars[:, 3] .> 0.0001)
+        optim_vars[lenders, 3] .-= imbalance ./ length(lenders)
+        d[lenders] .-= imbalance ./ length(lenders)
+    end   
+
+    println("Imbalance after adjustment: ", get_market_balance(bank_sys))
+end
+
 function contagion(N, α, ω_n, ω_l, γ, τ, d, e, σ, ζ, exp_δ, σ_δ, r_n, σ_rn)
 
     params = equilibrium(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, N*2)

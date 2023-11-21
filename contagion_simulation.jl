@@ -1,3 +1,4 @@
+using Pkg
 Pkg.add.(["DelimitedFiles", "CSV"])
 using DelimitedFiles
 using CSV

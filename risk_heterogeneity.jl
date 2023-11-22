@@ -1,5 +1,5 @@
 using Pkg
-Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS"])
+#Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS"])
 using Random
 using Distributions
 #using Plots
@@ -91,62 +91,6 @@ function optim_allocation_msg(model)
     println(" objective value = ", objective_value(model), " | ", primal_status(model), " | ", termination_status(model))
 end
 
-
-N     = 20 # n banks
-α     = 0.01 # liquidity requirement
-ω_n   = 1 # risk weight on non-liquid assets
-ω_l   = 0.2 # risk weight on liquid assets
-γ     = 0.08 # equity requirement ratio
-τ     = 0.01 # equity buffer
-d     = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
-e     = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
-#d     = rand(Normal(500, 50), N)
-#e     = rand(Normal(50, 5), N)
-σ     = rand([2.001], N) #rand(Uniform(2 - σ_sim, 2 + σ_sim), N) # risk aversion
-extreme = rand(1:N, 1)
-ζ     = 0.6 # lgd
-exp_δ = 0.005 # pd
-σ_δ   = 0.003 # variance of pd
-r_n   = rand(Uniform(0.01, 0.15), 10) # return on non liquid assets
-σ_rn  = (1/12).*(maximum(r_n) - minimum(r_n)).^2
-
-optim_allocation(100, 0.01, 1, 0.2, 0.08, 0.01, 55.6, 0.01, 0.05, 0.6, 0.005, 0.0006944, 0.003, 2.001)
-
-
-optim_allocation(d, α, ω_n, ω_l, γ, τ, e, r_n, r_l, ζ, exp_δ, σ_rn, σ_δ, σ)
-
-pko = Bank(1, 0.03, 100, 100, 120, 140, 30, 50, 2.0, 0.00139)
-system = BankSystem([pko], 0.01, 1, 0.2, 0.08, 0.01, 0.6, 0.005, 0.003, 0.05)
-
-optim_allocation!(pko, system)
-
-mean(e ./ d) 
-500/50
-
-N     = 20 # n banks
-α     = 0.01 # liquidity requirement
-ω_n   = 1.0 # risk weight on non-liquid assets
-ω_l   = 0.2 # risk weight on liquid assets
-γ     = 0.08 # equity requirement ratio
-τ     = 0.01 # equity buffer
-d     = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
-e     = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
-#d     = rand(Normal(500, 50), N)
-#e     = rand(Normal(50, 5), N)
-σ     = rand([2.001], N) #rand(Uniform(2 - σ_sim, 2 + σ_sim), N) # risk aversion
-extreme = rand(1:N, 1)
-ζ     = 0.6 # lgd
-exp_δ = 0.005 # pd
-σ_δ   = 0.003 # variance of pd
-r_n   = rand(Uniform(0.01, 0.15), N) # return on non liquid assets
-σ_rn  = (1/12).*(maximum(r_n) - minimum(r_n)).^2
-
-
-system = BankSystem(α = 0.01, ω_n = 1.0, ω_l = 0.2, γ = 0.08, τ = 0.01, ζ = 0.6, exp_δ = 0.005, σ_δ = 0.003)
-
-populate!(system, N = 20)
-
-get_market_balance(system)
 
 function populate!(bank_sys::BankSystem; 
                    N = 20, 
@@ -282,7 +226,7 @@ function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20)
     params = (r_l = [0.05, 0.05], diff = [10000, Inf], up_bound = [0.1], low_bound = [0.0])
 
     while (abs(params.diff[end]) > tol) && ((abs(params.diff[end] - params.diff[end-1]) > 1) | length(params.diff) < min_iter)
-        println("\n iteracja: r_l: ", params.r_l[end], " | imbalans:", params.diff[end]) 
+        println("\n iteration: r_l: ", params.r_l[end], " | imbalance: ", round(params.diff[end])) 
         bank_sys.r_l = params.r_l[end]
 
         # optim_allocation!.(bank_sys.banks, bank_sys) ?

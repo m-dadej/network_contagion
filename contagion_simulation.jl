@@ -15,7 +15,10 @@ bank_sys = BankSystem(α = 0.05,
                       σ_δ = 0.002)
 
 N = 10                      
-populate!(bank_sys, N = N, r_n = rand(Uniform(0.0, 0.08), N), σ = rand([1.5], N))
+populate!(bank_sys, 
+          N = N, 
+          r_n = rand(Uniform(0.0, 0.08), N), 
+          σ = rand([1.5], N))
 
 isempty(bank_sys.banks) ? populate!(bank_sys) : nothing
 equilibrium!(bank_sys)

@@ -11,7 +11,7 @@ using HiGHS
 using Printf
 
 mutable struct Bank{V <: AbstractFloat}
-    id::Int64
+    const id::Int64
     const r_n::V
     # balance sheet
     c::V

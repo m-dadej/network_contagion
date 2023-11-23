@@ -1,9 +1,29 @@
 using Pkg
-Pkg.add.(["DelimitedFiles", "CSV"])
+#Pkg.add.(["DelimitedFiles", "CSV"])
 using DelimitedFiles
 using CSV
 
 include("risk_heterogeneity.jl")
+include("optim_alloc_nlopt.jl")
+
+N     = 20 # n banks
+α     = 0.01 # liquidity requirement
+ω_n   = 1.0 # risk weight on non-liquid assets
+ω_l   = 0.2 # risk weight on liquid assets
+γ     = 0.08 # equity requirement ratio
+τ     = 0.01 # equity buffer
+d     = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
+e     = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
+#d     = rand(Normal(500, 50), N)
+#e     = rand(Normal(50, 5), N)
+σ     = rand([2.001], N) #rand(Uniform(2 - σ_sim, 2 + σ_sim), N) # risk aversion
+extreme = rand(1:N, 1)
+ζ     = 0.6 # lgd
+exp_δ = 0.005 # pd
+σ_δ   = 0.003 # variance of pd
+r_n   = rand(Uniform(0.01, 0.15), N) # return on non liquid assets
+σ_rn  = (1/12).*(maximum(r_n) - minimum(r_n)).^2
+
 
 bank_sys = BankSystem(α = 0.05,
                       ω_n = 1.0, 
@@ -14,120 +34,81 @@ bank_sys = BankSystem(α = 0.05,
                       exp_δ = 0.004, 
                       σ_δ = 0.002)
 
-N = 10                      
+N = 8                     
 populate!(bank_sys, 
           N = N, 
           r_n = rand(Uniform(0.0, 0.08), N), 
           σ = rand([1.5], N))
 
-isempty(bank_sys.banks) ? populate!(bank_sys) : nothing
-equilibrium!(bank_sys)
-adjust_imbalance!(bank_sys)
+optim_allocation!(bank_sys.banks[1], bank_sys)          
 
-fund_matching!(bank_sys, 0.2)
+equilibrium!(bank_sys)
+
+adjust_imbalance!(bank_sys)
+fund_matching!(bank_sys, 0.5)
+contagion!(bank_sys)
+
+bank_sys.banks
 
 balance_check.(bank_sys.banks)
 
-equity_requirement(bank_sys) .- (bank_sys.γ .+ bank_sys.τ)
+[bank_sys.banks[i].e for i in 1:N]
 
-
-shocked_bank = rand(1:N)
-bank_sys.banks[shocked_bank].e = 0
-bank_sys.banks[shocked_bank].n = 0
-
-#optim_vars[shocked_bank, 1] .= 0
-
-
-#(c + n + l) - (d + b + e)
-
-# OD TEGO MOMENTU 3 I 4 W optim_vars sa depreciated, uzywaj A_ib a jak chcesz zagregowane watosci to:
-# l = sum(A_ib, dims=2) = optim_vars[:, 3]
-# b = sum(A_ib, dims=1) = optim_vars[:, 4]
-
-
-# co jak bank upadł, calluje debt ale debtors nie maja wystarczajaco hajsu?
-e_t = [0, sum([bank.e for bank in bank_sys.banks])]
-# clearing loop until there is no defaulted bank with any liquid assets (cash and IB)
-#  any(e .<= 0 .&& (sum(A_ib, dims=2) .> 0 .|| optim_vars[:, 1] .> 0))
-
-findall(x -> x.e <= 0, bank_sys.banks)
-
-findall(x->(x<4)&&(x>1),A)
-
-sum(bank_sys.A_ib, dims=2)
-[bank.l for bank in bank_sys.banks]
-
-while e_t[end-1] != e_t[end]
-
-    # identify defaults (negative capital)
-    defaults = findall(x -> x.e <= 0, bank_sys.banks)
-    
-    for default in defaults
-        bank_sys.banks[default].d .-= bank_sys.banks[default][1].c
-        bank_sys.banks[default].c = 0
-    end
-
-    calling_banks = findall(x -> x.e <= 0 && (x.l > 0 || x.c > 0), bank_sys.banks)
-    
-    for call_id in calling_banks
-
-        debtors = findall(bank_sys.A_ib[call_id, :] .> 0)
-        # debtors repay either what they owe or have
-
-
-        bank_sys.banks[call_id].d += sum(min.(bank_sys.A_ib[call_id, :], [bank_sys.banks[debtor][1].c for debtor in debtors])) # + cash
-    
-        repayment = min.(bank_sys.A_ib[call_id, :], [bank_sys.banks[debtor][1].c for debtor in debtors])
-        
-        [bank_sys.banks[debtor].c -= repayment[i] for (i, debtor) in enumerate(debtors)]
-        bank_sys.A_ib[call_id,:] .-= repayment # -IB assets
-
-    end
-
-    # stage 1: calling for liquidity
-    for call_id in calling_banks
-
-        debtors = findall(A_ib[call_id, :] .> 0)
-        # debtors repay either what they owe or have
-        d[call_id] += sum(min.(A_ib[call_id, :], optim_vars[:,1])) # + cash
-        repayment = min.(A_ib[call_id, :], optim_vars[:,1])
-        optim_vars[:,1] .-= repayment
-        A_ib[call_id,:] .-= repayment # -IB assets
-
-    end
-
-    # stage 2: writing down remaining IB liabilities
-    e .-= sum(A_ib[:, defaults], dims = 2)
-    A_ib[:, defaults] .= 0
-    push!(e_t, sum(e))
-end
-
-
+n_default(bank_sys)
+get_market_balance(bank_sys)
+bank_sys.banks
+bank_sys.A_ib
 
 function contagion!(bank_sys::BankSystem)
     
-    isempty(bank_sys.banks) ? populate!(bank_sys) : nothing
-    equilibrium!(bank_sys)
+    # shock
+    shocked_bank = rand(1:N)
 
-    # imbalance adjustment 
-    imbalance = get_market_balance(bank_sys)
+    # writing down shock
+    bank_sys.banks[shocked_bank].e = 0
+    bank_sys.banks[shocked_bank].n = 0
 
-    [bank.c - (bank_sys.α * bank.d) for bank in bank_sys.banks]
+    e_t = [0, sum([bank.e for bank in bank_sys.banks])]
 
-    println("any banks with not enoug liq: ", round.((optim_vars[:,1] .- (α .* d))))
-    println("imbalance: ", round.(sum(optim_vars[:,3]) - sum(optim_vars[:,4])))
+    while e_t[end-1] != e_t[end]
 
-    if imbalance > 0
-        borrowers = findall(optim_vars[:,4] .> 0.0001)
-        optim_vars[borrowers, 4] .+= imbalance ./ length(borrowers)
-        optim_vars[borrowers, 1] .+= imbalance ./ length(borrowers)
-    elseif imbalance < 0
-        lenders = findall(optim_vars[:, 3] .> 0.0001)
-        optim_vars[lenders, 3] .-= imbalance ./ length(lenders)
-        d[lenders] .-= imbalance ./ length(lenders)
-    end   
+        # identify defaults (negative capital)
+        defaults = findall(x -> x.e <= 0, bank_sys.banks)
+        
+        # repaying deposits with cash
+        for default in defaults
+            bank_sys.banks[default].d -= bank_sys.banks[default].c
+            bank_sys.banks[default].c = 0
+        end
 
-    println("Imbalance after adjustment: ", get_market_balance(bank_sys))
+        # which bank needs liquidity?
+        calling_banks = findall(x -> x.e <= 0 && (x.l > 0 || x.c > 0), bank_sys.banks)
+        
+        # calling for liquidity
+        for call_id in calling_banks
+            
+            debtors = findall(bank_sys.A_ib[call_id, :] .> 0) # debtors of calling bank
+            
+            for debtor in debtors
+                repayment = min.(bank_sys.A_ib[call_id, debtor], bank_sys.banks[debtor].c)
+                bank_sys.banks[call_id].c      += repayment
+                bank_sys.banks[debtor].c       -= repayment
+                bank_sys.A_ib[call_id, debtor] -= repayment
+                bank_sys.banks[call_id].l      -= repayment
+                bank_sys.banks[debtor].b       -= repayment
+            end            
+        end
+
+        #  writing down remaining IB liabilities
+        for default in defaults
+            creditors = findall(bank_sys.A_ib[:, default] .> 0)
+            for creditor in creditors
+                bank_sys.banks[creditor].e -= bank_sys.A_ib[creditor, default]
+                bank_sys.A_ib[creditor, default] = 0
+            end
+        end    
+        push!(e_t, sum([bank.e for bank in bank_sys.banks]))
+    end
 end
 
 function contagion(N, α, ω_n, ω_l, γ, τ, d, e, σ, ζ, exp_δ, σ_δ, r_n, σ_rn)

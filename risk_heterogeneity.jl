@@ -9,6 +9,7 @@ using Ipopt
 using NLopt
 using HiGHS
 using Printf
+using ForwardDiff
 
 mutable struct Bank{V <: AbstractFloat}
     const id::Int64
@@ -40,6 +41,8 @@ Base.@kwdef mutable struct BankSystem{V <: AbstractFloat}
     A_ib::Matrix{V} = Matrix{Float64}(undef, 0, 0)
 end    
 
+n_default(bank_sys::BankSystem) = length(findall(x -> x.e <= 0, bank_sys.banks))
+
 # show table of c, n, l, b of eery bank with rounding
 function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
     print(io, "Bank | c | n | l | b | e\n")
@@ -57,11 +60,11 @@ function exp_utility(bank::Bank, bank_system::BankSystem)
     #return (1/σ) - (1/σ) * exp(-σ*exp_profit) - (1/2) * σ * exp(-exp_profit * σ) * σ_profit
 end
 
-profit(r_n, n, r_l, l, ζ, δ, b, c) = (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b)
-profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r_l * bank.l) - ((1 /(1 - bank_system.ζ * bank_system.δ)) * bank_system.r_l * bank.b)  
+profit(r_n, n, r_l, l, ζ, δ, b) = (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b)
+profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r_l * bank.l) - ((1 /(1 - bank_system.ζ * bank_system.exp_δ)) * bank_system.r_l * bank.b)  
 
 σ_profit(n, σ_rn, b, r_l, ζ, σ_δ, exp_δ) =  n^2 * σ_rn - (b * r_l)^2 * ζ^2 * (1 - (ζ * exp_δ))^(-4) * σ_δ
-σ_profit(bank::Bank, bank_system::BankSystem) = bank.n^2 * bank_system.σ_rn - (bank.b * bank_system.r_l)^2 * bank_system.ζ^2 * (1 - (bank_system.ζ * bank_system.exp_δ))^(-4) * bank_system.σ_δ
+σ_profit(bank::Bank, bank_system::BankSystem) = bank.n^2 * bank.σ_rn - (bank.b * bank_system.r_l)^2 * bank_system.ζ^2 * (1 - (bank_system.ζ * bank_system.exp_δ))^(-4) * bank_system.σ_δ
 
 balance_check(c, n, l, d, b, e) = (c + n + l) - (d + b + e)
 balance_check(bank::Bank) = (bank.c + bank.n + bank.l) - (bank.d + bank.b + bank.e)
@@ -108,90 +111,6 @@ function populate!(bank_sys::BankSystem;
     for i in 1:N
         push!(bank_sys.banks, Bank(i, r_n[i], 0.0, 0.0, 0.0, d[i], e[i], 0.0, σ[i], σ_rn))
     end
-end
-    
-function optim_allocation!(bank::Bank, bank_sys::BankSystem)
-    
-    allocation = Model(NLopt.Optimizer)
-    set_optimizer_attribute(allocation, "algorithm", :LN_COBYLA) #:LN_COBYLA 
-    set_optimizer_attribute(allocation, "maxtime", 10)
-    set_silent(allocation)
-    register(allocation, :σ_profit, 7, σ_profit; autodiff = true)
-    register(allocation, :exp_utility, 3, exp_utility; autodiff = true)
-    register(allocation, :profit, 8, profit; autodiff = true)
-    register(allocation, :equity_requirement, 7, equity_requirement; autodiff = true)
-    @variable(allocation, c >= 0.1)
-    @variable(allocation, n >= 0.1)
-    @variable(allocation, l >= 0.1)
-    @variable(allocation, b >= 0.1)
-
-    # balance sheet identity
-    @constraint(allocation, balance_check(c, n, l, bank.d, b, bank.e) == 0)
-
-    # liquidity requirement
-    @constraint(allocation, c >= bank_sys.α * bank.d)
-
-    # capital requirement
-    @constraint(allocation, c + l + n >= b + bank.d + (bank_sys.γ + bank_sys.τ) * (bank_sys.ω_n * n + bank_sys.ω_l * l))
-    #@NLconstraint(allocation, (c + n + l - d - b) >= (γ + τ) * (ω_n * n + ω_l * l))
-    #@NLconstraint(allocation, equity_requirement(c, n, l, d, b, ω_n, ω_l) >= (γ + τ))
-    #(c + n + l - d - b)/(ω_n * n + ω_l * l)
-    
-    if bank.σ == 0.00
-        @NLobjective(allocation, Max, profit(bank.r_n, n, bank_sys.r_l, l, bank_sys.ζ, bank_sys.exp_δ, b, c))
-    else
-        # positive profit
-        @NLconstraint(allocation, profit(bank.r_n, n, bank_sys.r_l, l, bank_sys.ζ, bank_sys.exp_δ, b, c) >= 0.1)
-        @NLobjective(allocation, Max, exp_utility(profit(bank.r_n, n, bank_sys.r_l, l, bank_sys.ζ, bank_sys.exp_δ, b, c), σ_profit(n, bank.σ_rn, b, bank_sys.r_l, bank_sys.ζ,bank_sys.σ_δ, bank_sys.exp_δ), bank.σ))
-    end
-     
-    JuMP.optimize!(allocation)
-
-    bank.c = value(c)
-    bank.n = value(n)
-    bank.l = value(l)
-    bank.b = value(b)
-end
-
-function optim_allocation(d, α, ω_n, ω_l, γ, τ, e, r_n, r_l, ζ, exp_δ, σ_rn, σ_δ, σ)
-
-    #allocation = Model(Ipopt.Optimizer)
-    allocation = Model(NLopt.Optimizer)
-    set_optimizer_attribute(allocation, "algorithm", :LN_COBYLA) #:LN_COBYLA 
-    set_optimizer_attribute(allocation, "maxtime", 10)
-    set_silent(allocation)
-    register(allocation, :σ_profit, 7, σ_profit; autodiff = true)
-    register(allocation, :exp_utility, 3, exp_utility; autodiff = true)
-    register(allocation, :profit, 8, profit; autodiff = true)
-    register(allocation, :equity_requirement, 7, equity_requirement; autodiff = true)
-    @variable(allocation, c >= 0.1)
-    @variable(allocation, n >= 0.1)
-    @variable(allocation, l >= 0.1)
-    @variable(allocation, b >= 0.1)
-
-    # balance sheet identity
-    @constraint(allocation, balance_check(c, n, l, d, b, e) == 0)
-
-    # liquidity requirement
-    @constraint(allocation, c >= α * d)
-
-    # capital requirement
-    @constraint(allocation, c + l + n >= b + d + (γ + τ) * (ω_n * n + ω_l * l))
-    #@NLconstraint(allocation, (c + n + l - d - b) >= (γ + τ) * (ω_n * n + ω_l * l))
-    #@NLconstraint(allocation, equity_requirement(c, n, l, d, b, ω_n, ω_l) >= (γ + τ))
-    #(c + n + l - d - b)/(ω_n * n + ω_l * l)
-    
-    if σ == 0.00
-        @NLobjective(allocation, Max, profit(r_n, n, r_l, l, ζ, exp_δ, b, c))
-    else
-        # positive profit
-        @NLconstraint(allocation, profit(r_n, n, r_l, l, ζ, exp_δ, b, c) >= 0.1)
-        @NLobjective(allocation, Max, exp_utility(profit(r_n, n, r_l, l, ζ, exp_δ, b, c), σ_profit(n, σ_rn, b, r_l, ζ,σ_δ, exp_δ), σ))
-    end
-     
-    JuMP.optimize!(allocation)
-
-    return [value(dec_var) for dec_var in [c, n, l, b]]
 end
 
 function get_market_balance(bank_sys::BankSystem)

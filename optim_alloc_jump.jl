@@ -40,7 +40,6 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     bank.n = value(n)
     bank.l = value(l)
     bank.b = value(b)
-    println(objective_value(allocation))
 end
 
 function optim_allocation(d, α, ω_n, ω_l, γ, τ, e, r_n, r_l, ζ, exp_δ, σ_rn, σ_δ, σ)

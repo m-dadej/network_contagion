@@ -2,9 +2,11 @@ using Pkg
 #Pkg.add.(["DelimitedFiles", "CSV"])
 using DelimitedFiles
 using CSV
+using DataFrames
 
 include("risk_heterogeneity.jl")
-include("optim_alloc_nlopt.jl")
+#include("optim_alloc_nlopt.jl")
+include("optim_alloc_jump.jl")
 
 N     = 20 # n banks
 α     = 0.01 # liquidity requirement
@@ -28,29 +30,48 @@ r_n   = rand(Uniform(0.01, 0.15), N) # return on non liquid assets
 bank_sys = BankSystem(α = 0.05,
                       ω_n = 1.0, 
                       ω_l = 0.2, 
-                      γ = 0.07,
+                      γ = 0.05,
                       τ = 0.01, 
                       ζ = 0.6, 
-                      exp_δ = 0.004, 
-                      σ_δ = 0.002)
+                      exp_δ = 0.005, 
+                      σ_δ = 0.003)
 
 N = 8                     
 populate!(bank_sys, 
           N = N, 
-          r_n = rand(Uniform(0.0, 0.08), N), 
-          σ = rand([1.5], N))
+          r_n = rand(Uniform(0.0, 0.1), N), 
+          σ = rand([0.5], N))
 
 optim_allocation!(bank_sys.banks[1], bank_sys)          
 
 equilibrium!(bank_sys)
-
 adjust_imbalance!(bank_sys)
-fund_matching!(bank_sys, 0.5)
+fund_matching!(bank_sys, 0.3)
+
+get_market_balance(bank_sys)
+
+intermediators(bank_sys)
+
+
+
+
+liquidity(bank_sys)
+equity_requirement(bank_sys)
+assets(bank_sys)
+ib_share(bank_sys)
+leverage(bank_sys)
+
 contagion!(bank_sys)
 
-bank_sys.banks
-
-balance_check.(bank_sys.banks)
+results = zeros(9)
+results[2] = eq_r_l
+results[3] = mean(optim_vars[:,1] ./ d)
+results[4] = mean(round.(optim_vars[:, 3]))
+results[5] = mean(optim_vars[:, 5] ./ A)
+results[6] = mean(optim_vars[:,3] ./ A)
+results[7] = mean(k)
+results[8] = mean(e ./ A)
+results[9] = mean(optim_vars[:,2] ./ A)
 
 [bank_sys.banks[i].e for i in 1:N]
 

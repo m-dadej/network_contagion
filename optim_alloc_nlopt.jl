@@ -41,12 +41,13 @@ end
 
 function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     
-    opt = Opt(:LD_SLSQP, 4)
+    opt              = Opt(:LD_SLSQP, 4)
     opt.lower_bounds = [0.0, 0.0, 0.0, 0.0]
-    opt.xtol_rel = 0
+    opt.xtol_rel     = 0
+    opt.maxtime      = 5
 
     opt.min_objective = (x, fΔ) -> obj_f(x, fΔ, bank, bank_sys)
-    equality_constraint!(opt, (x, fΔ_bs) ->  bs_equality(x, fΔ_bs, bank))
+    equality_constraint!(opt,   (x, fΔ_bs) ->  bs_equality(x, fΔ_bs, bank))
     inequality_constraint!(opt, (x, fΔ_liq) -> liq_inequality(x, fΔ_liq, bank, bank_sys))
     inequality_constraint!(opt, (x, fΔ_cap) -> cap_inequality(x, fΔ_cap, bank, bank_sys))
 

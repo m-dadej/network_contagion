@@ -69,6 +69,18 @@ profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r
 balance_check(c, n, l, d, b, e) = (c + n + l) - (d + b + e)
 balance_check(bank::Bank) = (bank.c + bank.n + bank.l) - (bank.d + bank.b + bank.e)
 
+degree(bank_sys::BankSystem) = mean(sum(bank_sys.A_ib .> 0, dims = 1))
+assets(bank_sys::BankSystem) = [bank.c + bank.n + bank.l for bank in bank_sys.banks]
+assets(bank::Bank) = bank.c + bank.n + bank.l
+
+ib_share(bank_sys::BankSystem) = (sum(bank_sys.A_ib)/2) / sum(assets(bank_sys))
+leverage(bank_sys::BankSystem) = [bank.c / assets(bank) for bank in bank_sys.banks]
+leverage(bank::Bank) = bank.c / assets(bank)
+
+liquidity(bank::Bank) = bank.c / bank.d
+liquidity(bank_sys::BankSystem) = [bank.c / bank.d for bank in bank_sys.banks]
+
+intermediators(bank_sys::BankSystem) = findall(x -> (x.l > 2) & (x.b > 2), bank_sys.banks)
 
 equity_requirement(c, n, l, d, b, ω_n, ω_l) = (c + n + l - d - b)/(ω_n * n + ω_l * l)
 equity_requirement(bank::Bank, bank_system::BankSystem) = (bank.c + bank.n + bank.l - bank.d - bank.b)/(bank_system.ω_n * bank.n + bank_system.ω_l * bank.l)

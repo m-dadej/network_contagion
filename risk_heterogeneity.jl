@@ -41,8 +41,6 @@ Base.@kwdef mutable struct BankSystem{V <: AbstractFloat}
     A_ib::Matrix{V} = Matrix{Float64}(undef, 0, 0)
 end    
 
-n_default(bank_sys::BankSystem) = length(findall(x -> x.e <= 0, bank_sys.banks))
-
 # show table of c, n, l, b of eery bank with rounding
 function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
     print(io, "Bank | c | n | l | b | e\n")
@@ -50,6 +48,14 @@ function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
         print(io, bank.id, " | ", round(bank.c), " | ", round(bank.n), " | ", round(bank.l), " | ", round(bank.b), " | ", round(bank.e), "\n")
     end
 end    
+
+function print_bs(banks::Vector{Bank})
+    print("Bank | c | n | l | b | e\n")
+    for bank in banks
+        print(bank.id, " | ", round(bank.c), " | ", round(bank.n), " | ", round(bank.l), " | ", round(bank.b), " | ", round(bank.e), "\n")
+    end
+end    
+
 
 exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
 
@@ -59,6 +65,8 @@ function exp_utility(bank::Bank, bank_system::BankSystem)
     return ((exp_profit)^(1-bank.σ))/(1 - bank.σ) - (((bank.σ/2)*(exp_profit)^(-(1+bank.σ))) * σ_profit)
     #return (1/σ) - (1/σ) * exp(-σ*exp_profit) - (1/2) * σ * exp(-exp_profit * σ) * σ_profit
 end
+
+n_default(bank_sys::BankSystem) = length(findall(x -> x.e <= 0, bank_sys.banks))
 
 profit(r_n, n, r_l, l, ζ, δ, b) = (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b)
 profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r_l * bank.l) - ((1 /(1 - bank_system.ζ * bank_system.exp_δ)) * bank_system.r_l * bank.b)  
@@ -74,8 +82,8 @@ assets(bank_sys::BankSystem) = [bank.c + bank.n + bank.l for bank in bank_sys.ba
 assets(bank::Bank) = bank.c + bank.n + bank.l
 
 ib_share(bank_sys::BankSystem) = (sum(bank_sys.A_ib)/2) / sum(assets(bank_sys))
-leverage(bank_sys::BankSystem) = [bank.c / assets(bank) for bank in bank_sys.banks]
-leverage(bank::Bank) = bank.c / assets(bank)
+leverage(bank_sys::BankSystem) = [bank.e / assets(bank) for bank in bank_sys.banks]
+leverage(bank::Bank) = bank.e / assets(bank)
 
 liquidity(bank::Bank) = bank.c / bank.d
 liquidity(bank_sys::BankSystem) = [bank.c / bank.d for bank in bank_sys.banks]
@@ -150,19 +158,19 @@ function get_market_balance(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_
     return sum(optim_vars[:,3]) - sum(optim_vars[:, 4])
 end    
 
-function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20)
+function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20, verbose = true)
 
     tol = tol < 0 ? length(bank_sys.banks)*2 : tol
 
     params = (r_l = [0.05, 0.05], diff = [10000, Inf], up_bound = [0.1], low_bound = [0.0])
 
     while (abs(params.diff[end]) > tol) && ((abs(params.diff[end] - params.diff[end-1]) > 1) | length(params.diff) < min_iter)
-        println("\n iteration: r_l: ", params.r_l[end], " | imbalance: ", round(params.diff[end])) 
+        verbose && println("\n iteration: r_l: ", params.r_l[end], " | imbalance: ", round(params.diff[end])) 
         bank_sys.r_l = params.r_l[end]
 
         # optim_allocation!.(bank_sys.banks, bank_sys) ?
         for bank in bank_sys.banks
-            print("|", bank.id, "|")
+            verbose && print("|", bank.id, "|")
             optim_allocation!(bank, bank_sys)
         end
 
@@ -210,12 +218,12 @@ function equilibrium(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n
 end
 
 function fund_matching!(bank_sys::BankSystem, max_expo = 0.1)
-    A = [bank.c + bank.n + bank.l for bank in bank_sys.banks]
-    l = [bank.l for bank in bank_sys.banks]
-    b = [bank.b for bank in bank_sys.banks]
-    σ = [bank.σ for bank in bank_sys.banks]
-    k = equity_requirement(bank_sys)
-    bank_sys.A_ib = fund_matching(l, b, σ, k, A, max_expo)
+    bank_sys.A_ib = fund_matching([bank.l for bank in bank_sys.banks],
+                                  [bank.b for bank in bank_sys.banks],
+                                  [bank.σ for bank in bank_sys.banks], 
+                                  equity_requirement(bank_sys), 
+                                  [bank.c + bank.n + bank.l for bank in bank_sys.banks],
+                                  max_expo)
 end
 
 function fund_matching(l, b, σ, k, A, max_expo)
@@ -243,9 +251,7 @@ function fund_matching(l, b, σ, k, A, max_expo)
     for i in 1:N 
         @constraint(fund_matching_optim, A_ib[:, i] ./ A[i] .<= max_expo)  
     end
-
-    capital_rate = k ./ A
-
+    
     #@objective(fund_matching_optim, Max,  sum(σ[i] * (A_ib[i,:]'capital_rate) for i in 1:N))
     @objective(fund_matching_optim, Max,  sum(σ[i] * (A_ib[i,:]'k) for i in 1:N))
     JuMP.optimize!(fund_matching_optim)
@@ -303,3 +309,55 @@ function clearing_vector(A_ib, c, n)
     return value.(p)
 end
 
+function contagion!(bank_sys::BankSystem)
+    
+    # shock
+    N = length(bank_sys.banks)
+    shocked_bank = rand(1:N)
+
+    # writing down shock
+    bank_sys.banks[shocked_bank].e = 0
+    bank_sys.banks[shocked_bank].n = 0
+
+    e_t = [0, sum([bank.e for bank in bank_sys.banks])]
+
+    while e_t[end-1] != e_t[end]
+
+        # identify defaults (negative capital)
+        defaults = findall(x -> x.e <= 0, bank_sys.banks)
+        
+        # repaying deposits with cash
+        for default in defaults
+            bank_sys.banks[default].d -= bank_sys.banks[default].c
+            bank_sys.banks[default].c = 0
+        end
+
+        # which bank needs liquidity?
+        calling_banks = findall(x -> x.e <= 0 && (x.l > 0 || x.c > 0), bank_sys.banks)
+        
+        # calling for liquidity
+        for call_id in calling_banks
+            
+            debtors = findall(bank_sys.A_ib[call_id, :] .> 0) # debtors of calling bank
+            
+            for debtor in debtors
+                repayment = min.(bank_sys.A_ib[call_id, debtor], bank_sys.banks[debtor].c)
+                bank_sys.banks[call_id].c      += repayment
+                bank_sys.banks[debtor].c       -= repayment
+                bank_sys.A_ib[call_id, debtor] -= repayment
+                bank_sys.banks[call_id].l      -= repayment
+                bank_sys.banks[debtor].b       -= repayment
+            end            
+        end
+
+        #  writing down remaining IB liabilities
+        for default in defaults
+            creditors = findall(bank_sys.A_ib[:, default] .> 0)
+            for creditor in creditors
+                bank_sys.banks[creditor].e -= bank_sys.A_ib[creditor, default]
+                bank_sys.A_ib[creditor, default] = 0
+            end
+        end    
+        push!(e_t, sum([bank.e for bank in bank_sys.banks]))
+    end
+end

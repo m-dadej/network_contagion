@@ -13,6 +13,14 @@ function obj_f(x::AbstractVector{T}, fΔ::AbstractVector{T},  bank::Bank, bank_s
     return -utility(x, bank, bank_sys)
 end 
 
+function prof_inequality(x::AbstractVector{T}, fΔ_prof::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T
+    if length(fΔ_prof) > 0
+        fΔ_prof[1:length(x)] .= ForwardDiff.gradient(x -> -((bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4])) + 0.1, x)
+    end
+
+    return -((bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4])) + 0.1
+end
+
 function bs_equality(x::AbstractVector{T}, fΔ_bs::AbstractVector{T}, bank::Bank) where T
     
     if length(fΔ_bs) > 0
@@ -39,6 +47,11 @@ function cap_inequality(x::AbstractVector{T}, fΔ_cap::AbstractVector{T}, bank::
     #return x[4] + bank.d + (bank_sys.γ + bank_sys.τ) * (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3]) - x[1] + x[2] + x[3]
 end
 
+bank = bank_sys.banks[15]
+
+x1 = x0 .+ rand(4)*10
+obj_f(x1, [0.0, 0.0, 0.0, 0.0], bank, bank_sys)
+
 function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     
     opt              = Opt(:LD_SLSQP, 4)
@@ -50,6 +63,8 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     equality_constraint!(opt,   (x, fΔ_bs) ->  bs_equality(x, fΔ_bs, bank))
     inequality_constraint!(opt, (x, fΔ_liq) -> liq_inequality(x, fΔ_liq, bank, bank_sys))
     inequality_constraint!(opt, (x, fΔ_cap) -> cap_inequality(x, fΔ_cap, bank, bank_sys))
+    # profit inequality is necessery as otherwise the objective function have a domain error
+    inequality_constraint!(opt, (x, fΔ_prof) -> prof_inequality(x, fΔ_prof, bank, bank_sys))
 
     s = bank_sys.banks[1].e + bank_sys.banks[1].d
     b = bank.d *0.1
@@ -59,6 +74,7 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
 
     (minf,minx,ret) = optimize(opt, x0)
 
+    ret == :FORCED_STOP && error("NLopt status: :FORCED_STOP")
     bank.c = minx[1]
     bank.n = minx[2]
     bank.l = minx[3]

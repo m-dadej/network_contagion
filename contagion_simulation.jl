@@ -9,12 +9,12 @@ include("optim_alloc_nlopt.jl")
 #include("optim_alloc_jump.jl")
 
 
-#d = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
-#e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
+d = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
+e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
 
 
-n_sim = 5
-σ_params = collect(0:0.25:3) .+ 0.001
+n_sim = 2
+σ_params = collect(-1.5:0.25:0)
 
 results = DataFrame(σ = Float64[],
                     n_default = Int64[],
@@ -29,7 +29,8 @@ results = DataFrame(σ = Float64[],
                     sd_eq_req = Float64[])
 
 for σ in σ_params
-    for _ in 1:n_sim
+    for sim in 1:n_sim
+        println("σ = $σ / $(maximum(σ_params)) | $sim / $n_sim")
         println("banksystem")
         bank_sys = BankSystem(α = 0.01,
                                 ω_n = 1.0, 
@@ -43,14 +44,23 @@ for σ in σ_params
         populate!(bank_sys, 
                     N = length(d), 
                     r_n = rand(Uniform(0.0, 0.1), length(d)), 
-                    σ = rand([σ], length(d)),
+                    σ = rand([1.501], length(d)),
                     d = d,
-                    e = e)                  
+                    e = e)   
 
-        equilibrium!(bank_sys, verbose = false)                     
+        super_spreader!(bank_sys, σ)
+
+        equilibrium!(bank_sys, verbose = true)                     
+        println("max BS diff: ",maximum(balance_check.(bank_sys.banks)))
         get_market_balance(bank_sys)
         adjust_imbalance!(bank_sys)
-        fund_matching!(bank_sys, 0.5)
+        try
+            fund_matching!(bank_sys, 0.2)    
+        catch
+            println("NO A_ib solution!!")
+            continue
+        end
+        
 
         res_sim = DataFrame(σ = [σ],
                             n_default = [0],
@@ -72,8 +82,19 @@ for σ in σ_params
     end
 end
 
+bank_sys.banks
+
+[bank_sys.banks[i].σ for i in 1:20]
+
+liquidity(bank_sys)
+
+liquidity(bank_sys)
+
+maximum(balance_check.(bank_sys.banks))
+
 combine(groupby(results, :σ), [:n_default, :degree, :eq_r_l, :mean_liq] .=> mean)
 
+combine(groupby(results, :σ), [:interm, :mean_ib_share] .=> mean)
 combine(groupby(results, :σ), nrow => :count)
 
 res_sim = DataFrame(n_default = Int64[0],

@@ -22,7 +22,7 @@ mutable struct Bank{V <: AbstractFloat}
     e::V
     b::V
     # preference params
-    const σ::V
+    σ::V
     const σ_rn::V
 end
 
@@ -94,6 +94,16 @@ equity_requirement(c, n, l, d, b, ω_n, ω_l) = (c + n + l - d - b)/(ω_n * n + 
 equity_requirement(bank::Bank, bank_system::BankSystem) = (bank.c + bank.n + bank.l - bank.d - bank.b)/(bank_system.ω_n * bank.n + bank_system.ω_l * bank.l)
 equity_requirement(bank_system::BankSystem) = [(bank.c + bank.n + bank.l - bank.d - bank.b)/(bank_system.ω_n * bank.n + bank_system.ω_l * bank.l) for bank in bank_system.banks]
 
+function super_spreader!(bank_sys::BankSystem, σ_ss::Float64)
+    N = length(bank_sys.banks)
+    super_s = rand(1:N)
+    
+    bank_sys.banks[super_s].σ +=  σ_ss
+    
+    for i in 1:N 
+        bank_sys.banks[i].σ -= i == super_s ? 0 : σ_ss/(N-1)   
+    end
+end    
 
 function optim_allocation_msg(model)
 

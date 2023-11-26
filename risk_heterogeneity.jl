@@ -1,5 +1,5 @@
 using Pkg
-#Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS"])
+Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
 using Random
 using Distributions
 #using Plots
@@ -41,20 +41,16 @@ Base.@kwdef mutable struct BankSystem{V <: AbstractFloat}
     A_ib::Matrix{V} = Matrix{Float64}(undef, 0, 0)
 end    
 
-# show table of c, n, l, b of eery bank with rounding
-function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
-    print(io, "Bank | c | n | l | b | e\n")
-    for bank in banks
-        print(io, bank.id, " | ", round(bank.c), " | ", round(bank.n), " | ", round(bank.l), " | ", round(bank.b), " | ", round(bank.e), "\n")
-    end
-end    
 
-function print_bs(banks::Vector{Bank})
-    print("Bank | c | n | l | b | e\n")
-    for bank in banks
-        print(bank.id, " | ", round(bank.c), " | ", round(bank.n), " | ", round(bank.l), " | ", round(bank.b), " | ", round(bank.e), "\n")
-    end
-end    
+function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
+    df = DataFrame(c = [round(bank.c) for bank in banks],
+              n = [round(bank.n) for bank in banks],
+              l = [round(bank.l) for bank in banks],
+              b = [round(bank.b) for bank in banks],
+              e = [round(bank.e) for bank in banks],
+              d = [round(bank.d) for bank in banks])
+    print(df)            
+end  
 
 exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
 

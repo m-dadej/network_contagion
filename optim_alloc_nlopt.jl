@@ -41,10 +41,11 @@ end
 
 function cap_inequality(x::AbstractVector{T}, fΔ_cap::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T
     if length(fΔ_cap) > 0
-        fΔ_cap[1:length(x)] .= ForwardDiff.gradient(x -> (bank_sys.γ + bank_sys.τ) - (bank_sys.banks[1].e /  (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3])), x)
+        fΔ_cap[1:length(x)] .= ForwardDiff.gradient(x -> (bank_sys.γ + bank_sys.τ) - (((x[1] + x[2] + x[3]) - (bank.d + x[4])) /  (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3])), x)
     end
 
-    return (bank_sys.γ + bank_sys.τ) - (bank_sys.banks[1].e /  (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3]))
+    return (bank_sys.γ + bank_sys.τ) - (((x[1] + x[2] + x[3]) - (bank.d + x[4])) /  (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3]))
+    #return (bank_sys.γ + bank_sys.τ) - (bank_sys.banks[1].e /  (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3]))
     #return x[4] + bank.d + (bank_sys.γ + bank_sys.τ) * (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3]) - x[1] + x[2] + x[3]
 end
 
@@ -63,10 +64,11 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     inequality_constraint!(opt, (x, fΔ_prof) -> prof_inequality(x, fΔ_prof, bank, bank_sys))
 
     s = bank_sys.banks[1].e + bank_sys.banks[1].d
-    b = bank.d *0.1
-    dec_params = (s + b)/3
+    b = bank.d * 0
+    c = bank.d * (bank_sys.α + 0.2)
+    dec_params = (s + b - c)
 
-    x0 = [dec_params,dec_params, dec_params, b]
+    x0 = [c, dec_params, 0, b]
 
     (minf,minx,ret) = optimize(opt, x0)
 

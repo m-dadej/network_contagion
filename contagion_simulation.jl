@@ -1,20 +1,26 @@
 using Pkg
-#Pkg.add.(["DelimitedFiles", "CSV"])
+Pkg.add.(["DelimitedFiles", "CSV", "DataFrames"])
 using DelimitedFiles
 using CSV
 using DataFrames
 
 include("risk_heterogeneity.jl")
 include("optim_alloc_nlopt.jl")
-include("optim_alloc_jump.jl")
+#include("optim_alloc_jump.jl")
 
 d = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
 e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
 
-n_sim = 20
-σ_params = collect(-1.5:0.25:0)
+n_sim = 50
+σ_ss_params = collect(-1.5:0.75:0)
+σ_params = [1.0, 2.0, 3.0] .+ 0.001
+
+n_sim*length(σ_ss_params)*length(σ_params)
+
+#results = CSV.read("results_nlopt.csv", DataFrame)
 
 results = DataFrame(σ = Float64[],
+                    σ_ss = Float64[],
                     n_default = Int64[],
                     degree = Float64[],
                     interm = Int64[],
@@ -26,92 +32,80 @@ results = DataFrame(σ = Float64[],
                     mean_eq_req = Float64[],
                     sd_eq_req = Float64[])
 
-for σ in σ_params
-    for sim in 1:n_sim
-        println("σ = $σ / $(maximum(σ_params)) | $sim / $n_sim")
-        println("banksystem")
-        bank_sys = BankSystem(α = 0.01,
-                                ω_n = 1.0, 
-                                ω_l = 0.2, 
-                                γ = 0.05,
-                                τ = 0.01, 
-                                ζ = 0.6, 
-                                exp_δ = 0.005, 
-                                σ_δ = 0.003)
-        
-        populate!(bank_sys, 
-                    N = length(d), 
-                    r_n = rand(Uniform(0.0, 0.1), length(d)), 
-                    σ = rand([1.501], length(d)),
-                    d = d,
-                    e = e)   
+for σ_ss in σ_ss_params
+    for σ in σ_params
+        for sim in 1:n_sim
+            println(" $sim / $n_sim | σ = $σ / $(maximum(σ_params)) | σ_ss = $σ_ss / $(maximum(σ_ss_params))")
+            bank_sys = BankSystem(α = 0.05,
+                                    ω_n = 1.2, 
+                                    ω_l = 0.5, 
+                                    γ = 0.06,
+                                    τ = 0.025, 
+                                    ζ = 0.6, 
+                                    exp_δ = 0.005, 
+                                    σ_δ = 0.003)
+            
+            populate!(bank_sys, 
+                        N = length(d), 
+                        r_n = rand(Uniform(0.0, 0.15), length(d)), 
+                        σ = rand([σ], length(d)),
+                        d = d,
+                        e = e)   
 
-        super_spreader!(bank_sys, σ)
+            super_spreader!(bank_sys, σ_ss)
 
-        equilibrium!(bank_sys, verbose = false)                     
-        println("max BS diff: ",maximum(balance_check.(bank_sys.banks)))
-        get_market_balance(bank_sys)
-        adjust_imbalance!(bank_sys)
-        try
-            fund_matching!(bank_sys, 0.2)    
-        catch
-            @warn "NO fund_matching solution!"
-            continue
+            equilibrium!(bank_sys, verbose = false)                     
+            println("max BS diff: ", maximum(balance_check.(bank_sys.banks)))
+            get_market_balance(bank_sys)
+            adjust_imbalance!(bank_sys)
+            try
+                fund_matching!(bank_sys, 0.5)    
+            catch
+                @warn "NO fund_matching solution!"
+                #fund_matching!(bank_sys, 1.0)  
+                continue
+            end
+            
+            res_sim = DataFrame(σ = [σ],
+                                σ_ss = [σ_ss],
+                                n_default = [0],
+                                degree = [degree(bank_sys)],
+                                interm = [length(intermediators(bank_sys))],
+                                eq_r_l = [bank_sys.r_l],
+                                mean_liq = [mean(liquidity(bank_sys))],
+                                sd_liq = [std(liquidity(bank_sys))],
+                                mean_ib_share = [mean(ib_share(bank_sys))],
+                                sd_ib_share = [std(ib_share(bank_sys))],
+                                mean_eq_req = [mean(equity_requirement(bank_sys))],
+                                sd_eq_req = [std(equity_requirement(bank_sys))])
+                      
+            contagion!(bank_sys)
+
+            res_sim.n_default[1] = n_default(bank_sys)
+            results = [results; res_sim]
         end
-        
-        res_sim = DataFrame(σ = [σ],
-                            n_default = [0],
-                            degree = [degree(bank_sys)],
-                            interm = [length(intermediators(bank_sys))],
-                            eq_r_l = [bank_sys.r_l],
-                            mean_liq = [mean(liquidity(bank_sys))],
-                            sd_liq = [std(liquidity(bank_sys))],
-                            mean_ib_share = [mean(ib_share(bank_sys))],
-                            sd_ib_share = [std(ib_share(bank_sys))],
-                            mean_eq_req = [mean(equity_requirement(bank_sys))],
-                            sd_eq_req = [std(equity_requirement(bank_sys))])
-
-        println("contagion")                        
-        contagion!(bank_sys)
-
-        res_sim.n_default[1] = n_default(bank_sys)
-        results = [results; res_sim]
     end
 end
 
-bank_sys.banks
 
-[bank_sys.banks[i].σ for i in 1:20]
-
-liquidity(bank_sys)
-
-liquidity(bank_sys)
-
-maximum(balance_check.(bank_sys.banks))
-
+sort(combine(groupby(results, :σ_ss), [:n_default, :degree, :eq_r_l, :mean_liq] .=> mean))
+sort(combine(groupby(results, :σ), [:n_default, :degree, :eq_r_l, :mean_liq] .=> std))
 sort(combine(groupby(results, :σ), [:n_default, :degree, :eq_r_l, :mean_liq] .=> mean))
 
-combine(groupby(results, :σ), [:interm, :mean_ib_share] .=> mean)
-combine(groupby(results, :σ), nrow => :count)
+sort(combine(groupby(results, :σ), [:n_default, :degree, :mean_liq, :mean_ib_share, :mean_eq_req] .=> mean))
 
-res_sim = DataFrame(n_default = Int64[0],
-                    interm = Int64[0],
-                    eq_r_l = Float64[0.0],
-                    mean_liq = Float64[0.0],
-                    sd_liq = Float64[0.0],
-                    mean_A_ib_A = Float64[0.0],
-                    sd_A_ib_A = Float64[0.0],
-                    mean_eq_req = Float64[0.0],
-                    sd_eq_req = Float64[0.0],
-                    mean_n_A = Float64[0.0],
-                    sd_n_A = Float64[0.0])
 
-res_sim.n_default[1] = 1
-push!(res_sim.n_default, 1)
+sort(combine(groupby(results, [:σ, :σ_ss]), [:n_default, :degree, :eq_r_l, :mean_liq] .=> mean))
 
-[results; res_sim]
+combine(groupby(results, [:σ_ss, :σ]), :n_default => x -> sum(x .> 2)/sum(x .> 0))
+combine(groupby(results, :σ_ss), :n_default => x -> sum(x .> 2)/sum(x .> 0))
 
-equilibrium!(bank_sys)
+CSV.write("results_nlopt.csv", results)
+
+
+
+combine(groupby(results, :σ_ss), [:interm, :mean_ib_share] .=> mean)
+combine(groupby(results, [:σ_ss, :σ]), nrow => :count)
 
 
 get_market_balance(bank_sys)
@@ -127,17 +121,6 @@ assets(bank_sys)
 ib_share(bank_sys)
 leverage(bank_sys)
 
-contagion!(bank_sys)
-
-results = zeros(9)
-results[2] = eq_r_l
-results[3] = mean(optim_vars[:,1] ./ d)
-results[4] = mean(round.(optim_vars[:, 3]))
-results[5] = mean(optim_vars[:, 5] ./ A)
-results[6] = mean(optim_vars[:,3] ./ A)
-results[7] = mean(k)
-results[8] = mean(e ./ A)
-results[9] = mean(optim_vars[:,2] ./ A)
 
 [bank_sys.banks[i].e for i in 1:N]
 

@@ -1,5 +1,6 @@
 function utility(x::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T      
     prof = (bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4])
+    prof = max(prof, 0) # otherwise we have a domain error
     σ_prof = x[2]^2 * bank.σ_rn - (x[4] * bank_sys.r_l)^2 * bank_sys.ζ^2 * (1 - (bank_sys.ζ * bank_sys.exp_δ))^(-4) * bank_sys.σ_δ
     return prof^(1-bank.σ)/(1-bank.σ) - (((bank.σ/2)*(prof)^(-(1+bank.σ))) * σ_prof)
 end
@@ -18,7 +19,7 @@ function prof_inequality(x::AbstractVector{T}, fΔ_prof::AbstractVector{T}, bank
         fΔ_prof[1:length(x)] .= ForwardDiff.gradient(x -> -((bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4])) + 0.1, x)
     end
 
-    return -((bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4])) + 0.1
+    return -((bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4])) + 0.5
 end
 
 function bs_equality(x::AbstractVector{T}, fΔ_bs::AbstractVector{T}, bank::Bank) where T
@@ -46,11 +47,6 @@ function cap_inequality(x::AbstractVector{T}, fΔ_cap::AbstractVector{T}, bank::
     return (bank_sys.γ + bank_sys.τ) - (bank_sys.banks[1].e /  (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3]))
     #return x[4] + bank.d + (bank_sys.γ + bank_sys.τ) * (bank_sys.ω_n * x[2] + bank_sys.ω_l * x[3]) - x[1] + x[2] + x[3]
 end
-
-bank = bank_sys.banks[15]
-
-x1 = x0 .+ rand(4)*10
-obj_f(x1, [0.0, 0.0, 0.0, 0.0], bank, bank_sys)
 
 function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     

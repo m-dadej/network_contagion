@@ -56,13 +56,12 @@ function print_bs(banks::Vector{Bank})
     end
 end    
 
-
 exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
 
 function exp_utility(bank::Bank, bank_system::BankSystem)
     exp_profit = profit(bank, bank_system)
-    σ_profit = σ_profit(bank, bank_system)
-    return ((exp_profit)^(1-bank.σ))/(1 - bank.σ) - (((bank.σ/2)*(exp_profit)^(-(1+bank.σ))) * σ_profit)
+    σ_prof = σ_profit(bank, bank_system)
+    return ((exp_profit)^(1-bank.σ))/(1 - bank.σ) - (((bank.σ/2)*(exp_profit)^(-(1+bank.σ))) * σ_prof)
     #return (1/σ) - (1/σ) * exp(-σ*exp_profit) - (1/2) * σ * exp(-exp_profit * σ) * σ_profit
 end
 
@@ -195,8 +194,7 @@ function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20, verbose =
             push!(params.r_l, (params.r_l[end] + params.up_bound[end])/2)
         end
     end
-
-    params.r_l[findmin(abs.(params.diff))[2]-1]
+    
     bank_sys.r_l = params.r_l[findmin(abs.(params.diff))[2]-1]
 
     # optim_allocation!.(bank_sys.banks, bank_sys) ?

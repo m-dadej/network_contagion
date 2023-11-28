@@ -365,3 +365,57 @@ function contagion!(bank_sys::BankSystem)
         push!(e_t, sum([bank.e for bank in bank_sys.banks]))
     end
 end
+
+
+function contagion_liq!(bank_sys::BankSystem)
+    
+    # shock
+    N = length(bank_sys.banks)
+    shocked_bank = rand(1:N)
+
+    # writing down shock
+    bank_sys.banks[shocked_bank].e = 0
+    bank_sys.banks[shocked_bank].n = 0
+
+    e_t = [0, sum([bank.e for bank in bank_sys.banks])]
+
+    while e_t[end-1] != e_t[end]
+
+        # identify defaults (negative capital)
+        defaults = findall(x -> x.e <= 0, bank_sys.banks)
+        
+        # repaying deposits with cash
+        for default in defaults
+            bank_sys.banks[default].d -= bank_sys.banks[default].c
+            bank_sys.banks[default].c = 0
+        end
+
+        # which bank needs liquidity?
+        calling_banks = findall(x -> x.e <= 0 && (x.l > 0 || x.c > 0), bank_sys.banks)
+        
+        # calling for liquidity
+        for call_id in calling_banks
+            
+            debtors = findall(bank_sys.A_ib[call_id, :] .> 0) # debtors of calling bank
+            
+            for debtor in debtors
+                repayment = min.(bank_sys.A_ib[call_id, debtor], bank_sys.banks[debtor].c)
+                bank_sys.banks[call_id].c      += repayment
+                bank_sys.banks[debtor].c       -= repayment
+                bank_sys.A_ib[call_id, debtor] -= repayment
+                bank_sys.banks[call_id].l      -= repayment
+                bank_sys.banks[debtor].b       -= repayment
+            end            
+        end
+
+        #  writing down remaining IB liabilities
+        for default in defaults
+            creditors = findall(bank_sys.A_ib[:, default] .> 0)
+            for creditor in creditors
+                bank_sys.banks[creditor].e -= bank_sys.A_ib[creditor, default]
+                bank_sys.A_ib[creditor, default] = 0
+            end
+        end    
+        push!(e_t, sum([bank.e for bank in bank_sys.banks]))
+    end
+end

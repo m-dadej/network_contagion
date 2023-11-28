@@ -1,5 +1,5 @@
 using Pkg
-Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
+#Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
 using Random
 using Distributions
 #using Plots
@@ -38,13 +38,14 @@ Base.@kwdef mutable struct BankSystem{V <: AbstractFloat}
     const σ_δ::V
     banks::Vector{Bank} = Bank[]
     r_l::V = 0.0
+    p_n::V = 1.0
     A_ib::Matrix{V} = Matrix{Float64}(undef, 0, 0)
 end    
 
 
 function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
     df = DataFrame(c = [round(bank.c) for bank in banks],
-              n = [round(bank.n) for bank in banks],
+              n_p1 = [round(bank.n) for bank in banks],
               l = [round(bank.l) for bank in banks],
               b = [round(bank.b) for bank in banks],
               e = [round(bank.e) for bank in banks],
@@ -69,25 +70,27 @@ profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r
 σ_profit(n, σ_rn, b, r_l, ζ, σ_δ, exp_δ) =  n^2 * σ_rn - (b * r_l)^2 * ζ^2 * (1 - (ζ * exp_δ))^(-4) * σ_δ
 σ_profit(bank::Bank, bank_system::BankSystem) = bank.n^2 * bank.σ_rn - (bank.b * bank_system.r_l)^2 * bank_system.ζ^2 * (1 - (bank_system.ζ * bank_system.exp_δ))^(-4) * bank_system.σ_δ
 
-balance_check(c, n, l, d, b, e) = (c + n + l) - (d + b + e)
-balance_check(bank::Bank) = (bank.c + bank.n + bank.l) - (bank.d + bank.b + bank.e)
+#balance_check(c, n, l, d, b, e) = (c + n + l) - (d + b + e)
+balance_check(bank::Bank, bank_system::BankSystem) = (bank.c + (bank.n * bank_system.p_n) + bank.l) - (bank.d + bank.b + bank.e)
+balance_check(bank_system::BankSystem) = [balance_check(bank, bank_system) for bank in bank_system.banks]
+
 
 degree(bank_sys::BankSystem) = mean(sum(bank_sys.A_ib .> 0, dims = 1))
-assets(bank_sys::BankSystem) = [bank.c + bank.n + bank.l for bank in bank_sys.banks]
-assets(bank::Bank) = bank.c + bank.n + bank.l
+assets(bank_sys::BankSystem) = [bank.c + (bank.n * bank_sys.p_n) + bank.l for bank in bank_sys.banks]
+assets(bank::Bank, bank_sys::BankSystem) = bank.c + (bank.n * bank_sys.p_n) + bank.l
 
 ib_share(bank_sys::BankSystem) = (sum(bank_sys.A_ib)/2) / sum(assets(bank_sys))
-leverage(bank_sys::BankSystem) = [bank.e / assets(bank) for bank in bank_sys.banks]
-leverage(bank::Bank) = bank.e / assets(bank)
+leverage(bank_sys::BankSystem) = [bank.e / assets(bank, bank_sys) for bank in bank_sys.banks]
+leverage(bank::Bank, bank_sys::BankSystem) = bank.e / assets(bank, bank_sys)
 
 liquidity(bank::Bank) = bank.c / bank.d
 liquidity(bank_sys::BankSystem) = [bank.c / bank.d for bank in bank_sys.banks]
 
 intermediators(bank_sys::BankSystem) = findall(x -> (x.l > 2) & (x.b > 2), bank_sys.banks)
 
-equity_requirement(c, n, l, d, b, ω_n, ω_l) = (c + n + l - d - b)/(ω_n * n + ω_l * l)
-equity_requirement(bank::Bank, bank_system::BankSystem) = (bank.c + bank.n + bank.l - bank.d - bank.b)/(bank_system.ω_n * bank.n + bank_system.ω_l * bank.l)
-equity_requirement(bank_system::BankSystem) = [(bank.c + bank.n + bank.l - bank.d - bank.b)/(bank_system.ω_n * bank.n + bank_system.ω_l * bank.l) for bank in bank_system.banks]
+#equity_requirement(c, n, l, d, b, ω_n, ω_l) = (c + n + l - d - b)/(ω_n * n + ω_l * l)
+equity_requirement(bank::Bank, bank_system::BankSystem) = (bank.c + (bank.n*bank_system.p_n) + bank.l - bank.d - bank.b)/((bank_system.ω_n * bank.n * bank_system.p_n) + bank_system.ω_l * bank.l)
+equity_requirement(bank_system::BankSystem) = [equity_requirement(bank, bank_system) for bank in bank_system.banks]
 
 function super_spreader!(bank_sys::BankSystem, σ_ss::Float64)
     N = length(bank_sys.banks)
@@ -100,25 +103,24 @@ function super_spreader!(bank_sys::BankSystem, σ_ss::Float64)
     end
 end    
 
-function optim_allocation_msg(model)
+# function optim_allocation_msg(model)
 
-    if primal_status(model) == FEASIBLE_POINT
-        error("No feasible primal")
-    end
-    if  dual_status(model) == FEASIBLE_POINT
-        error("No feasible dual")
-    end
+#     if primal_status(model) == FEASIBLE_POINT
+#         error("No feasible primal")
+#     end
+#     if  dual_status(model) == FEASIBLE_POINT
+#         error("No feasible dual")
+#     end
 
-    if termination_status(model) == OPTIMAL
-        println("Solution is optimal")
-    elseif termination_status(model) == TIME_LIMIT && has_values(model)
-        println("Solution is suboptimal due to a time limit, but a primal solution is available")
-    elseif primal_status(model) != FEASIBLE_POINT
-        error("no ladnie")
-    end
-    println(" objective value = ", objective_value(model), " | ", primal_status(model), " | ", termination_status(model))
-end
-
+#     if termination_status(model) == OPTIMAL
+#         println("Solution is optimal")
+#     elseif termination_status(model) == TIME_LIMIT && has_values(model)
+#         println("Solution is suboptimal due to a time limit, but a primal solution is available")
+#     elseif primal_status(model) != FEASIBLE_POINT
+#         error("no ladnie")
+#     end
+#     println(" objective value = ", objective_value(model), " | ", primal_status(model), " | ", termination_status(model))
+# end
 
 function populate!(bank_sys::BankSystem; 
                    N = 20, 
@@ -151,17 +153,17 @@ function get_market_balance(bank_sys::BankSystem)
     return  agg_supply - agg_demand 
 end
 
-function get_market_balance(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, r_l)
+# function get_market_balance(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, r_l)
 
-    optim_vars = zeros(N, 4)
+#     optim_vars = zeros(N, 4)
 
-    for bank in 1:N 
-        print("|", bank, "|")
-        optim_vars[bank, 1:4] .= optim_allocation(d[bank], α, ω_n, ω_l, γ, τ, e[bank], r_n[bank], r_l, ζ, exp_δ, σ_rn, σ_δ, σ[bank])
-    end
+#     for bank in 1:N 
+#         print("|", bank, "|")
+#         optim_vars[bank, 1:4] .= optim_allocation(d[bank], α, ω_n, ω_l, γ, τ, e[bank], r_n[bank], r_l, ζ, exp_δ, σ_rn, σ_δ, σ[bank])
+#     end
 
-    return sum(optim_vars[:,3]) - sum(optim_vars[:, 4])
-end    
+#     return sum(optim_vars[:,3]) - sum(optim_vars[:, 4])
+# end    
 
 function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20, verbose = true)
 
@@ -199,27 +201,27 @@ function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20, verbose =
     end
 end
 
-function equilibrium(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, tol)
+# function equilibrium(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, tol)
     
-    param_space = (r_l = [0.05, 0.05], imbalance = [10000, Inf], up_bound = [0.1], low_bound = [0.0])
+#     param_space = (r_l = [0.05, 0.05], imbalance = [10000, Inf], up_bound = [0.1], low_bound = [0.0])
     
-    while (abs(param_space.imbalance[end]) > tol) && ((abs(param_space.imbalance[end] - param_space.imbalance[end-1]) > 1) | length(param_space.imbalance) < 20)
+#     while (abs(param_space.imbalance[end]) > tol) && ((abs(param_space.imbalance[end] - param_space.imbalance[end-1]) > 1) | length(param_space.imbalance) < 20)
         
-        println("\n iteracja: r_l: ", param_space.r_l[end], " | imbalans:", param_space.imbalance[end])
-        push!(param_space.imbalance, get_market_balance(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, param_space.r_l[end]))
+#         println("\n iteracja: r_l: ", param_space.r_l[end], " | imbalans:", param_space.imbalance[end])
+#         push!(param_space.imbalance, get_market_balance(N, d, e, α, ω_n, ω_l, γ, τ, σ, ζ, exp_δ, σ_δ, r_n, σ_rn, param_space.r_l[end]))
         
-        # if too much supply, choose next r_l is a midpoint between last and minimum of previous 3 r_l (halving r_l)
-        if param_space.imbalance[end] > 0
-            push!(param_space.up_bound, param_space.r_l[end])
-            push!(param_space.r_l, (param_space.r_l[end] + param_space.low_bound[end])/2)            
-        else
-            push!(param_space.low_bound, param_space.r_l[end])
-            push!(param_space.r_l, (param_space.r_l[end] + param_space.up_bound[end])/2)
-        end
-    end
+#         # if too much supply, choose next r_l is a midpoint between last and minimum of previous 3 r_l (halving r_l)
+#         if param_space.imbalance[end] > 0
+#             push!(param_space.up_bound, param_space.r_l[end])
+#             push!(param_space.r_l, (param_space.r_l[end] + param_space.low_bound[end])/2)            
+#         else
+#             push!(param_space.low_bound, param_space.r_l[end])
+#             push!(param_space.r_l, (param_space.r_l[end] + param_space.up_bound[end])/2)
+#         end
+#     end
 
-    return param_space
-end
+#     return param_space
+# end
 
 function fund_matching!(bank_sys::BankSystem, max_expo = 0.1)
     bank_sys.A_ib = fund_matching([bank.l for bank in bank_sys.banks],
@@ -312,6 +314,92 @@ function clearing_vector(A_ib, c, n)
 
     return value.(p)
 end
+
+function clearing_matrix(bank_sys::BankSystem)
+
+    N = length(bank_sys.banks)
+    market_clearing = Model(HiGHS.Optimizer)
+    set_silent(market_clearing)
+    @variable(market_clearing, p[1:N, 1:N] >= 0) 
+
+    # i - borrower, j - lender
+    for i in 1:N
+        for j in 1:N
+            @constraint(market_clearing, p[i,j] <= bank_sys.A_ib[i,j])             
+        end
+    @constraint(market_clearing, sum(p[:,i]) <= bank_sys.banks[i].c + bank_sys.banks[i].n + sum(p[i,:])) 
+    end
+
+    @objective(market_clearing, Max,  sum(p))
+    JuMP.optimize!(market_clearing)
+
+    return value.(p)
+end
+
+s
+
+[sum(bank_sys.A_ib[j,:]) for j in 1:length(bank_sys.banks)]
+
+[bank.l for bank in bank_sys.banks]
+
+bank_sys = BankSystem(α = 0.05,
+                        ω_n = 1.2, 
+                        ω_l = 0.5, 
+                        γ = 0.06,
+                        τ = 0.025, 
+                        ζ = 0.6, 
+                        exp_δ = 0.005, 
+                        σ_δ = 0.003)
+            
+populate!(bank_sys, 
+            N = length(d), 
+            r_n = rand(Uniform(0.0, 0.15), length(d)), 
+            σ = rand([σ], length(d)),
+            d = d,
+            e = e)   
+
+equilibrium!(bank_sys, verbose = false)                     
+println("max BS diff: ", maximum(balance_check.(bank_sys.banks)))
+get_market_balance(bank_sys)
+adjust_imbalance!(bank_sys)
+
+fund_matching!(bank_sys, 0.5)    
+
+sum(clearing_matrix(bank_sys), dims = 1)'
+clearing_vector(bank_sys.A_ib, [bank.c for bank in bank_sys.banks], [bank.n for bank in bank_sys.banks])
+
+p = clearing_vector(bank_sys.A_ib, [bank.c for bank in bank_sys.banks], [banks.n for bank in bank_sys.banks])
+
+[bank.b for bank in bank_sys.banks] .- p
+
+# defaults
+([bank.b for bank in bank_sys.banks] .- p .- [bank.n for bank in bank_sys.banks]) .> 0.001
+
+asset_sale = min.([bank.b for bank in bank_sys.banks] .- p, [bank.n for bank in bank_sys.banks])
+
+p_n = 1 - sqrt(sum(asset_sale) / sum([bank.n for bank in bank_sys.banks]))
+
+
+sqrt(0.9)
+
+n_supply = max.(p .- [bank.c + bank.l for bank in bank_sys.banks], 0)
+
+
+
+    
+
+# [bank.n = bank.n * p_n for bank in bank_sys.banks]
+
+
+ 
+
+# N = length(bank_sys.banks)
+# shocked_bank = rand(1:N)
+
+# # writing down shock
+# bank_sys.banks[shocked_bank].e = 0
+# bank_sys.banks[shocked_bank].n = 0
+
 
 function contagion!(bank_sys::BankSystem)
     

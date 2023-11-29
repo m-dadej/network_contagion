@@ -1,3 +1,6 @@
+Analiza jaki jest wynik w zaleznosci od charakterystyk pierwszego bankructwa? (e.g. czy jak maly bank padnie to moze byc duzy problem dla systemu?)
+
+
 Wnioski:
 
 - im wyzsza awersja do ryzyka tym wiecej bankructw oraz nizsze adequacy ratio. Chyba wynika to z tego ze parametry modelu bardziej motywuja do wyboru n zamiast l, poniewaz 1) lgd jest wyzsze -> ryzyko l jest wyzsze, 2) r_n ~ U(0.06, 0.07) ma niska wariancje ktora potem jest rowniez inputem do wyceniania n. Oba te parametry sa inne niz w paperze iniaki moze warto to zmienic tak aby zaleznosc miedyz awersja a capitla ratio i bankructwami byla sensowan
@@ -24,13 +27,4 @@ pytania:
 Problem:
 
 - Oba U(E p) rozroznia meidzy malymi i duzymi bankami
-- czasem obniżka r_l prowadzi do kontrintuicyjnego zwiekszenia sie imbalance. 
-- chyba czasem moze sie zdazyc ze imbalance adjustment nie zadziala
-- rzadko ale daje infeasible solution
-- bardzo rzadko daje error bo solver proboje wartosci ktore sa infeasible
 - Chyba problem ale im wieksza awersja do ryzyka tym wiecej bankructw
-
-The talk will introduce a financial network contagion model, in which banks, by optimizing their balance sheet are endogenously forming interbank market. The banks differ with respect to their risk aversion and thus may be more or less active on interbank market or lend to more risky counterparties. 
-
-
-The talk will introduce a financial network contagion model, in which heterogenous banks, by optimizing their balance sheet, are endogenously forming a network of credit links. The interbank market, converging to the equilibrium through tatonnement process, allows to facilitate the exchange of funds to more profitable investments from banks with worse investment opportunities. The banks differ with respect to their risk aversion when optimizing balance sheet and matching counterparties, which makes them more or less active on interbank market or lend to more risky counterparties. An exogenous  introduction of a credit shock into the model allows to investigate whether a system with the same risk aversion among banks on average but different higher order moments is more prone to default contagions and how . e.g. with a single extremely risk loving entity, analogical to the "super-spreaders" from epidemiology.

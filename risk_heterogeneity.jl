@@ -44,13 +44,12 @@ end
 
 
 function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
-    df = DataFrame(c = [round(bank.c) for bank in banks],
+    print(io, DataFrame(c = [round(bank.c) for bank in banks],
               n_p1 = [round(bank.n) for bank in banks],
               l = [round(bank.l) for bank in banks],
               b = [round(bank.b) for bank in banks],
               e = [round(bank.e) for bank in banks],
-              d = [round(bank.d) for bank in banks])
-    print(df)            
+              d = [round(bank.d) for bank in banks])  ) 
 end  
 
 exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
@@ -62,7 +61,7 @@ function exp_utility(bank::Bank, bank_system::BankSystem)
     #return (1/σ) - (1/σ) * exp(-σ*exp_profit) - (1/2) * σ * exp(-exp_profit * σ) * σ_profit
 end
 
-n_default(bank_sys::BankSystem) = length(findall(x -> x.e <= 0, bank_sys.banks))
+n_default(bank_sys::BankSystem) = length(findall(x -> x.e <= 0.00001, bank_sys.banks))
 
 profit(r_n, n, r_l, l, ζ, δ, b) = (r_n * n + r_l * l) - ((1 /(1 - ζ * δ)) *r_l * b)
 profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r_l * bank.l) - ((1 /(1 - bank_system.ζ * bank_system.exp_δ)) * bank_system.r_l * bank.b)  
@@ -71,8 +70,20 @@ profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r
 σ_profit(bank::Bank, bank_system::BankSystem) = bank.n^2 * bank.σ_rn - (bank.b * bank_system.r_l)^2 * bank_system.ζ^2 * (1 - (bank_system.ζ * bank_system.exp_δ))^(-4) * bank_system.σ_δ
 
 #balance_check(c, n, l, d, b, e) = (c + n + l) - (d + b + e)
-balance_check(bank::Bank, bank_system::BankSystem) = (bank.c + (bank.n * bank_system.p_n) + bank.l) - (bank.d + bank.b + bank.e)
-balance_check(bank_system::BankSystem) = [balance_check(bank, bank_system) for bank in bank_system.banks]
+function balance_check(bank::Bank, bank_system::BankSystem, valuation::String) 
+    
+    if valuation == "market"
+        p = bank_system.p_n
+    elseif valuation == "book"
+        p = 1.0
+    end
+    
+    return (bank.c + (bank.n * p) + bank.l) - (bank.d + bank.b + bank.e)
+end    
+
+function balance_check(bank_system::BankSystem, valuation::String) 
+    return [balance_check(bank, bank_system, valuation) for bank in bank_system.banks]
+end    
 
 
 degree(bank_sys::BankSystem) = mean(sum(bank_sys.A_ib .> 0, dims = 1))
@@ -336,71 +347,6 @@ function clearing_matrix(bank_sys::BankSystem)
     return value.(p)
 end
 
-s
-
-[sum(bank_sys.A_ib[j,:]) for j in 1:length(bank_sys.banks)]
-
-[bank.l for bank in bank_sys.banks]
-
-bank_sys = BankSystem(α = 0.05,
-                        ω_n = 1.2, 
-                        ω_l = 0.5, 
-                        γ = 0.06,
-                        τ = 0.025, 
-                        ζ = 0.6, 
-                        exp_δ = 0.005, 
-                        σ_δ = 0.003)
-            
-populate!(bank_sys, 
-            N = length(d), 
-            r_n = rand(Uniform(0.0, 0.15), length(d)), 
-            σ = rand([σ], length(d)),
-            d = d,
-            e = e)   
-
-equilibrium!(bank_sys, verbose = false)                     
-println("max BS diff: ", maximum(balance_check.(bank_sys.banks)))
-get_market_balance(bank_sys)
-adjust_imbalance!(bank_sys)
-
-fund_matching!(bank_sys, 0.5)    
-
-sum(clearing_matrix(bank_sys), dims = 1)'
-clearing_vector(bank_sys.A_ib, [bank.c for bank in bank_sys.banks], [bank.n for bank in bank_sys.banks])
-
-p = clearing_vector(bank_sys.A_ib, [bank.c for bank in bank_sys.banks], [banks.n for bank in bank_sys.banks])
-
-[bank.b for bank in bank_sys.banks] .- p
-
-# defaults
-([bank.b for bank in bank_sys.banks] .- p .- [bank.n for bank in bank_sys.banks]) .> 0.001
-
-asset_sale = min.([bank.b for bank in bank_sys.banks] .- p, [bank.n for bank in bank_sys.banks])
-
-p_n = 1 - sqrt(sum(asset_sale) / sum([bank.n for bank in bank_sys.banks]))
-
-
-sqrt(0.9)
-
-n_supply = max.(p .- [bank.c + bank.l for bank in bank_sys.banks], 0)
-
-
-
-    
-
-# [bank.n = bank.n * p_n for bank in bank_sys.banks]
-
-
- 
-
-# N = length(bank_sys.banks)
-# shocked_bank = rand(1:N)
-
-# # writing down shock
-# bank_sys.banks[shocked_bank].e = 0
-# bank_sys.banks[shocked_bank].n = 0
-
-
 function contagion!(bank_sys::BankSystem)
     
     # shock
@@ -413,6 +359,7 @@ function contagion!(bank_sys::BankSystem)
 
     e_t = [0, sum([bank.e for bank in bank_sys.banks])]
 
+    # while no change in equity
     while e_t[end-1] != e_t[end]
 
         # identify defaults (negative capital)
@@ -432,13 +379,19 @@ function contagion!(bank_sys::BankSystem)
             
             debtors = findall(bank_sys.A_ib[call_id, :] .> 0) # debtors of calling bank
             
+            # if calling bank has liquidity, repay IB liabilities
             for debtor in debtors
+
+                # first repaying with cash
                 repayment = min.(bank_sys.A_ib[call_id, debtor], bank_sys.banks[debtor].c)
                 bank_sys.banks[call_id].c      += repayment
                 bank_sys.banks[debtor].c       -= repayment
                 bank_sys.A_ib[call_id, debtor] -= repayment
                 bank_sys.banks[call_id].l      -= repayment
                 bank_sys.banks[debtor].b       -= repayment
+
+                # then repaying with non-liquid assets
+                #repayment = min.(bank_sys.A_ib[call_id, debtor], bank_sys.banks[debtor].n)
             end            
         end
 
@@ -453,3 +406,125 @@ function contagion!(bank_sys::BankSystem)
         push!(e_t, sum([bank.e for bank in bank_sys.banks]))
     end
 end
+
+function contagion_liq!(bank_sys::BankSystem)
+    
+    # shock
+    N = length(bank_sys.banks)
+    shocked_bank = rand(1:N)
+
+    # writing down shock
+    bank_sys.banks[shocked_bank].e = 0
+
+    e_t = [0, sum([bank.e for bank in bank_sys.banks])]
+
+    # while no change in equity
+    while !isapprox(e_t[end-1] - e_t[end], 0, atol = 1e-5) 
+
+        # identify defaults (negative capital)
+        defaults = findall(x -> x.e <= 0, bank_sys.banks)
+
+        # repaying deposits with cash
+        for default in defaults
+            asset_sale!(bank_sys.banks[default], bank_sys, bank_sys.banks[default].n)
+            repayment = min(bank_sys.banks[default].c, bank_sys.banks[default].d)
+            bank_sys.banks[default].d -= repayment
+            bank_sys.banks[default].c  -= repayment
+        end
+
+        # which bank needs liquidity?
+        # nie powinno byc: ktory bank ma depozyty i jakies nieplynne aktywa?
+        calling_banks = findall(x -> x.e <= 0 && (x.d > 0 && (x.l > 0)), bank_sys.banks)
+        #calling_banks = findall(x -> x.e <= 0 && (x.l > 0 || x.c > 0), bank_sys.banks)
+        
+        # calling for liquidity
+        for call_id in calling_banks
+            liquidity_call!(bank_sys.banks[call_id], bank_sys, bank_sys.banks[call_id].d)                     
+        end
+
+        #  writing down remaining IB liabilities
+        for default in defaults
+            bank_sys.A_ib[:, default] .= 0
+            update_interbank_loans!(bank_sys)
+            bank_sys.banks[default].b = 0
+            # creditors = findall(bank_sys.A_ib[:, default] .> 0)
+            # for creditor in creditors
+            #     bank_sys.banks[creditor].e -= bank_sys.A_ib[creditor, default]
+            #     bank_sys.A_ib[creditor, default] = 0
+            # end
+        end    
+        push!(e_t, sum([bank.e for bank in bank_sys.banks]))
+    end
+end
+
+function update_interbank_loans!(bank_sys::BankSystem)
+    for bank in bank_sys.banks
+        bank.e -= bank.l - sum(bank_sys.A_ib[bank.id,:])
+        bank.l = sum(bank_sys.A_ib[bank.id,:])
+    end
+end
+
+
+function liquidity_call!(calling_bank::Bank, bank_sys::BankSystem, req_liquidity::Float64)
+
+    debtors = findall(bank_sys.A_ib[calling_bank.id, :] .> 0.0001) # debtors of calling bank
+    println("recursion from: $(calling_bank.id)")
+    # if calling bank has liquidity, repay IB liabilities
+    for debtor in debtors
+    
+        println(" to: $debtor")
+        #### first repaying with cash ####
+        claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor]) # how much is requested to pay
+        repayment = min.(claim, bank_sys.banks[debtor].c) # how much is actually possible to pay at hand
+        # transaction
+        repayment!(calling_bank, bank_sys.banks[debtor], bank_sys, repayment)
+        # updating funding need
+        req_liquidity -= repayment
+
+        #### if not enough then calling other banks for liquidity ####
+        claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor])
+        liquidity_call!(bank_sys.banks[debtor], bank_sys, claim) # recursion !!!
+        repayment = min.(claim, bank_sys.banks[debtor].c)
+        # transaction
+        repayment!(calling_bank, bank_sys.banks[debtor], bank_sys, repayment)
+        req_liquidity -= repayment
+
+        #### if still not enough then repaying with non-liquid assets ####
+        claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor])
+        repayment = min.(claim, bank_sys.banks[debtor].n * bank_sys.p_n)
+
+        # selling non-liquid assets
+        asset_sale!(bank_sys.banks[debtor], bank_sys, repayment)
+        repayment = min.(claim, bank_sys.banks[debtor].c)
+        repayment!(calling_bank, bank_sys.banks[debtor], bank_sys, repayment)
+        req_liquidity -= repayment
+        
+        #### if still not enough then writing down IB liabilities + defaulting ####
+        claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor])
+        if claim > 0.001
+            bank_sys.banks[debtor].e = -1
+            bank_sys.A_ib[:, debtor] .= 0
+        end
+        update_interbank_loans!(bank_sys)
+    end            
+end
+
+function asset_sale!(bank::Bank, bank_sys::BankSystem, amount::Float64)
+    bank.n -= amount * bank_sys.p_n^(-1)  # selling non-liquid assets
+    bank.c += amount                      # receiving cash
+    bank.e -= amount * (1 - bank_sys.p_n) # realising losses 
+    # market impact
+    bank_sys.p_n *= exp(-(amount / sum([bank.n for bank in bank_sys.banks])))
+end
+
+function repayment!(calling_bank::Bank, debtor::Bank, bank_sys::BankSystem, amount::Float64)
+    # sanity check,  not useful in practice
+    amount > debtor.c && error("not enough cash to repay: $(amount) > $(debtor.c)")
+
+    calling_bank.c += amount
+    debtor.c       -= amount
+    bank_sys.A_ib[calling_bank.id, debtor.id] -= amount
+    calling_bank.l -= amount
+    debtor.b       -= amount
+end
+    

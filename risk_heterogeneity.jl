@@ -431,15 +431,13 @@ function contagion_liq!(bank_sys::BankSystem)
     N = length(bank_sys.banks)
     shocked_bank = rand(1:N)
 
-    # writing down shock
-    bank_sys.banks[shocked_bank].e = 0
+    bank_sys.banks[shocked_bank].e = 0 # writing down shock
 
     e_t = [0, sum([bank.e for bank in bank_sys.banks])]
 
     # while no change in equity
     while !isapprox(e_t[end-1] - e_t[end], 0, atol = 1e-5) 
 
-        # identify defaults (negative capital)
         defaults = findall(x -> x.e <= 0, bank_sys.banks)
 
         # repaying deposits with cash
@@ -451,9 +449,7 @@ function contagion_liq!(bank_sys::BankSystem)
         end
 
         # which bank needs liquidity?
-        # nie powinno byc: ktory bank ma depozyty i jakies nieplynne aktywa?
         calling_banks = findall(x -> x.e <= 0 && (x.d > 0 && (x.l > 0)), bank_sys.banks)
-        #calling_banks = findall(x -> x.e <= 0 && (x.l > 0 || x.c > 0), bank_sys.banks)
         
         # calling for liquidity
         for call_id in calling_banks
@@ -466,11 +462,6 @@ function contagion_liq!(bank_sys::BankSystem)
             bank_sys.A_ib[:, default] .= 0
             update_interbank_loans!(bank_sys)
             bank_sys.banks[default].b = 0
-            # creditors = findall(bank_sys.A_ib[:, default] .> 0)
-            # for creditor in creditors
-            #     bank_sys.banks[creditor].e -= bank_sys.A_ib[creditor, default]
-            #     bank_sys.A_ib[creditor, default] = 0
-            # end
         end    
         push!(e_t, sum([bank.e for bank in bank_sys.banks]))
     end
@@ -490,7 +481,7 @@ function liquidity_call!(calling_bank::Bank,
                          debt_loop::Vector{Int64})
 
     debtors = findall(bank_sys.A_ib[calling_bank.id, :] .> 0.0001) # debtors of calling bank
-    println("recursion from: $(calling_bank.id)")
+    print("recursion from: $(calling_bank.id)")
     # if calling bank has liquidity, repay IB liabilities
     
     # recursion infinite loop check

@@ -12,33 +12,33 @@ using Printf
 using ForwardDiff
 
 mutable struct Bank{V <: AbstractFloat}
-    const id::Int64
-    const r_n::V
+    const id::Int64     
+    const r_n::V        # return on non-liquid assets
     # balance sheet
-    c::V
-    n::V
-    l::V
-    d::V
-    e::V
-    b::V
+    c::V                # cash
+    n::V                # non-liquid assets
+    l::V                # interbank assets
+    d::V                # deposits
+    e::V                # equity
+    b::V                # interbank liabilities
     # preference params
-    σ::V
-    const σ_rn::V
+    σ::V                # risk aversion
+    const σ_rn::V       # variance of return on non-liquid assets
 end
 
 Base.@kwdef mutable struct BankSystem{V <: AbstractFloat}
     # regulatory params
-    const α::V
-    const ω_n::V
-    const ω_l::V
-    const γ::V
-    const τ::V
-    const ζ::V
-    const exp_δ::V
-    const σ_δ::V
+    const α::V        # liquid asset requirement
+    const ω_n::V      # weight of non-liquid assets
+    const ω_l::V      # weight of interbank assets
+    const γ::V        # capital adequacy requirement
+    const τ::V        # capital adequacy buffer
+    const ζ::V        # loss given default
+    const exp_δ::V    # expected default probability
+    const σ_δ::V      # variance of default probability
     banks::Vector{Bank} = Bank[]
-    r_l::V = 0.0
-    p_n::V = 1.0
+    r_l::V = 0.0      # interbank rate
+    p_n::V = 1.0      # price of non-liquid assets  
     A_ib::Matrix{V} = Matrix{Float64}(undef, 0, 0)
 end    
 
@@ -49,7 +49,7 @@ function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
               l = [round(bank.l) for bank in banks],
               b = [round(bank.b) for bank in banks],
               e = [round(bank.e) for bank in banks],
-              d = [round(bank.d) for bank in banks])  ) 
+              d = [round(bank.d) for bank in banks])) 
 end  
 
 exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)

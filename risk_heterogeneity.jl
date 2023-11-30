@@ -87,8 +87,26 @@ end
 
 
 degree(bank_sys::BankSystem) = mean(sum(bank_sys.A_ib .> 0, dims = 1))
-assets(bank_sys::BankSystem) = [bank.c + (bank.n * bank_sys.p_n) + bank.l for bank in bank_sys.banks]
-assets(bank::Bank, bank_sys::BankSystem) = bank.c + (bank.n * bank_sys.p_n) + bank.l
+
+function assets(bank_sys::BankSystem, valuation::String)
+    if valuation == "market"
+        p = bank_sys.p_n
+    elseif valuation == "book"
+        p = 1.0
+    end
+
+    return [bank.c + (bank.n * p) + bank.l for bank in bank_sys.banks]
+end    
+
+function assets(bank::Bank, bank_sys::BankSystem, valuation::String) 
+    if valuation == "market"
+        p = bank_sys.p_n
+    elseif valuation == "book"
+        p = 1.0
+    end
+    
+    bank.c + (bank.n * p) + bank.l 
+end
 
 ib_share(bank_sys::BankSystem) = (sum(bank_sys.A_ib)/2) / sum(assets(bank_sys))
 leverage(bank_sys::BankSystem) = [bank.e / assets(bank, bank_sys) for bank in bank_sys.banks]
@@ -279,8 +297,8 @@ end
 function adjust_imbalance!(bank_sys)
     imbalance = get_market_balance(bank_sys)
 
-    println("max liquidity shortfall: $(minimum(round.([bank.c - (bank_sys.α * bank.d) for bank in bank_sys.banks])))")
-    println("imbalance: $(round.(imbalance))")
+    #println("max liquidity shortfall: $(minimum(round.([bank.c - (bank_sys.α * bank.d) for bank in bank_sys.banks])))")
+    #println("imbalance: $(round.(imbalance))")
     
     if imbalance > 0
         borrowers = findall([bank.b for bank in bank_sys.banks] .> 1)
@@ -439,7 +457,8 @@ function contagion_liq!(bank_sys::BankSystem)
         
         # calling for liquidity
         for call_id in calling_banks
-            liquidity_call!(bank_sys.banks[call_id], bank_sys, bank_sys.banks[call_id].d)                     
+            debt_loop = Int64[]
+            liquidity_call!(bank_sys.banks[call_id], bank_sys, bank_sys.banks[call_id].d, debt_loop)                     
         end
 
         #  writing down remaining IB liabilities
@@ -465,11 +484,23 @@ function update_interbank_loans!(bank_sys::BankSystem)
 end
 
 
-function liquidity_call!(calling_bank::Bank, bank_sys::BankSystem, req_liquidity::Float64)
+function liquidity_call!(calling_bank::Bank, 
+                         bank_sys::BankSystem,
+                         req_liquidity::Float64,
+                         debt_loop::Vector{Int64})
 
     debtors = findall(bank_sys.A_ib[calling_bank.id, :] .> 0.0001) # debtors of calling bank
     println("recursion from: $(calling_bank.id)")
     # if calling bank has liquidity, repay IB liabilities
+    
+    # recursion infinite loop check
+    if calling_bank.id in debt_loop
+        @warn "loop detected"
+        return
+    end
+
+    push!(debt_loop, calling_bank.id)
+    
     for debtor in debtors
     
         println(" to: $debtor")
@@ -483,7 +514,7 @@ function liquidity_call!(calling_bank::Bank, bank_sys::BankSystem, req_liquidity
 
         #### if not enough then calling other banks for liquidity ####
         claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor])
-        liquidity_call!(bank_sys.banks[debtor], bank_sys, claim) # recursion !!!
+        liquidity_call!(bank_sys.banks[debtor], bank_sys, claim, debt_loop) # recursion !!!
         repayment = min.(claim, bank_sys.banks[debtor].c)
         # transaction
         repayment!(calling_bank, bank_sys.banks[debtor], bank_sys, repayment)

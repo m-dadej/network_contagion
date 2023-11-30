@@ -1,5 +1,5 @@
 using Pkg
-#Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
+Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
 using Random
 using Distributions
 #using Plots
@@ -70,7 +70,7 @@ profit(bank::Bank, bank_system::BankSystem) = (bank.r_n * bank.n + bank_system.r
 σ_profit(bank::Bank, bank_system::BankSystem) = bank.n^2 * bank.σ_rn - (bank.b * bank_system.r_l)^2 * bank_system.ζ^2 * (1 - (bank_system.ζ * bank_system.exp_δ))^(-4) * bank_system.σ_δ
 
 #balance_check(c, n, l, d, b, e) = (c + n + l) - (d + b + e)
-function balance_check(bank::Bank, bank_system::BankSystem, valuation::String) 
+function balance_check(bank::Bank, bank_system::BankSystem; valuation::String = "book") 
     
     if valuation == "market"
         p = bank_system.p_n
@@ -81,14 +81,14 @@ function balance_check(bank::Bank, bank_system::BankSystem, valuation::String)
     return (bank.c + (bank.n * p) + bank.l) - (bank.d + bank.b + bank.e)
 end    
 
-function balance_check(bank_system::BankSystem, valuation::String) 
-    return [balance_check(bank, bank_system, valuation) for bank in bank_system.banks]
+function balance_check(bank_system::BankSystem; valuation::String = "book") 
+    return [balance_check(bank, bank_system; valuation = valuation) for bank in bank_system.banks]
 end    
 
 
 degree(bank_sys::BankSystem) = mean(sum(bank_sys.A_ib .> 0, dims = 1))
 
-function assets(bank_sys::BankSystem, valuation::String)
+function assets(bank_sys::BankSystem; valuation::String = "book")
     if valuation == "market"
         p = bank_sys.p_n
     elseif valuation == "book"
@@ -98,7 +98,7 @@ function assets(bank_sys::BankSystem, valuation::String)
     return [bank.c + (bank.n * p) + bank.l for bank in bank_sys.banks]
 end    
 
-function assets(bank::Bank, bank_sys::BankSystem, valuation::String) 
+function assets(bank::Bank, bank_sys::BankSystem; valuation::String = "book") 
     if valuation == "market"
         p = bank_sys.p_n
     elseif valuation == "book"
@@ -288,7 +288,7 @@ function fund_matching(l, b, σ, k, A, max_expo)
     end
     
     #@objective(fund_matching_optim, Max,  sum(σ[i] * (A_ib[i,:]'capital_rate) for i in 1:N))
-    @objective(fund_matching_optim, Max,  sum(σ[i] * (A_ib[i,:]'k) for i in 1:N))
+    @objective(fund_matching_optim, Min,  sum(σ[i] * (A_ib[i,:]'k) for i in 1:N))
     JuMP.optimize!(fund_matching_optim)
 
     return value.(A_ib)
@@ -481,8 +481,6 @@ function liquidity_call!(calling_bank::Bank,
                          debt_loop::Vector{Int64})
 
     debtors = findall(bank_sys.A_ib[calling_bank.id, :] .> 0.0001) # debtors of calling bank
-    print("recursion from: $(calling_bank.id)")
-    # if calling bank has liquidity, repay IB liabilities
     
     # recursion infinite loop check
     if calling_bank.id in debt_loop
@@ -494,7 +492,7 @@ function liquidity_call!(calling_bank::Bank,
     
     for debtor in debtors
     
-        println(" to: $debtor")
+        println("recursion from: $(calling_bank.id) to: $debtor")
         #### first repaying with cash ####
         claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor]) # how much is requested to pay
         repayment = min.(claim, bank_sys.banks[debtor].c) # how much is actually possible to pay at hand

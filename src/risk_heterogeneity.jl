@@ -459,7 +459,7 @@ function contagion_liq!(bank_sys::BankSystem)
 
         #  writing down remaining IB liabilities
         for default in defaults
-            bank_sys.A_ib[:, default] .= 0
+            bank_sys.A_ib[:, default] .*= (1 - bank_sys.ζ)
             update_interbank_loans!(bank_sys)
             bank_sys.banks[default].b = 0
         end    
@@ -530,12 +530,15 @@ function liquidity_call!(calling_bank::Bank,
 end
 
 function asset_sale!(bank::Bank, bank_sys::BankSystem, amount::Float64)
+    amount = max(0, amount)
     bank.n -= amount * bank_sys.p_n^(-1)  # selling non-liquid assets
     bank.c += amount                      # receiving cash
     bank.e -= amount * (1 - bank_sys.p_n) # realising losses 
     # market impact
     bank_sys.p_n *= exp(-(amount / sum([bank.n for bank in bank_sys.banks])))
 end
+
+
 
 function repayment!(calling_bank::Bank, debtor::Bank, bank_sys::BankSystem, amount::Float64)
     # sanity check,  not useful in practice

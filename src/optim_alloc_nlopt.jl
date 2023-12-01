@@ -1,5 +1,5 @@
 function utility(x::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T      
-    prof = (bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4]) + x[1] * 0.02
+    prof = (bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4]) #+ x[1] * 0.02
     prof = max(prof, 0) # otherwise we have a domain error
     σ_prof = x[2]^2 * bank.σ_rn - (x[4] * bank_sys.r_l)^2 * bank_sys.ζ^2 * (1 - (bank_sys.ζ * bank_sys.exp_δ))^(-4) * bank_sys.σ_δ
     return prof^(1-bank.σ)/(1-bank.σ) - (((bank.σ/2)*(prof)^(-(1+bank.σ))) * σ_prof)

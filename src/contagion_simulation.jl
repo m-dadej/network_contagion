@@ -13,8 +13,8 @@ d = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/
 e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
 
 n_sim = 100
-σ_ss_params = [0.0]#collect(-1.5:0.25:0)
-σ_params = [0.0, 1.0, 2.0, 3.0] .+ 0.001
+σ_ss_params = [-1.5, 0.0]
+σ_params = [1.0, 3.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
@@ -37,13 +37,13 @@ for σ_ss in σ_ss_params
             seed = rand(1:10000000000)
             Random.seed!(seed)
 
-            println("seed: $seed | sim: $sim / $n_sim | σ = $σ / $(maximum(σ_params)) | σ_ss = $σ_ss / $(maximum(σ_ss_params))")
+            println("seed: $seed | sim: $sim / $n_sim | σ = $σ / $(σ_params[end]) | σ_ss = $σ_ss / $(maximum(σ_ss_params))")
             bank_sys = BankSystem(α = 0.05,
                                     ω_n = 1.0, 
                                     ω_l = 0.6, 
                                     γ = 0.06,
                                     τ = 0.02, 
-                                    ζ = 0.6, 
+                                    ζ = 0.5, 
                                     exp_δ = 0.01, 
                                     σ_δ = 0.01)
             
@@ -94,10 +94,10 @@ end
 
 #CSV.write("data/results_min.csv", results)
 
-quantile(results.n_default, [0.5, 0.75, 0.99, 1.0])
+quantile(results.n_default, collect(0.5:0.1:1.0))
 
 @chain results begin
-    groupby(:σ)
+    groupby([:σ, :σ_ss])
     combine(:n_default => mean)
     sort()
     #unstack(:σ, :n_default_mean)
@@ -105,23 +105,24 @@ end
 
 @chain results begin
     groupby(:σ)
-    combine([:n_default, :interm, :degree, :eq_r_l] .=> mean)
-    #combine([:mean_n_share, :mean_liq, :mean_ib_share] .=> mean)
+    #combine([:n_default, :interm, :degree, :eq_r_l] .=> mean)
+    combine([:mean_n_share, :mean_liq, :mean_ib_share] .=> mean)
     sort()
 end    
 
 cor(results.n_default, results.degree)
 
 names(select(results, Not(:σ_ss)))
+names(results)
 @chain results begin
-    select(Not(:σ_ss))
+    #select(Not(:σ_ss))
     Matrix()
     cor()
 end
 
 
 @chain results begin
-    groupby([:σ])
+    groupby([:σ_ss])
     combine(:n_default => x -> sum(x .> 3)/sum(x .> 0))
     #combine(nrow => :count)
     sort()

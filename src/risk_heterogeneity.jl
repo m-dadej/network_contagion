@@ -256,7 +256,7 @@ function fund_matching!(bank_sys::BankSystem, max_expo = 0.1)
     bank_sys.A_ib = fund_matching([bank.l for bank in bank_sys.banks],
                                   [bank.b for bank in bank_sys.banks],
                                   [bank.σ for bank in bank_sys.banks], 
-                                  equity_requirement(bank_sys), 
+                                  leverage(bank_sys), 
                                   [bank.c + bank.n + bank.l for bank in bank_sys.banks],
                                   max_expo)
 end
@@ -431,7 +431,7 @@ function contagion_liq!(bank_sys::BankSystem)
     N = length(bank_sys.banks)
     shocked_bank = rand(1:N)
 
-    bank_sys.banks[shocked_bank].e = 0 # writing down shock
+    bank_sys.banks[shocked_bank].e = 0 # shock to equity
 
     e_t = [0, sum([bank.e for bank in bank_sys.banks])]
 
@@ -459,21 +459,37 @@ function contagion_liq!(bank_sys::BankSystem)
 
         #  writing down remaining IB liabilities
         for default in defaults
-            bank_sys.A_ib[:, default] .*= (1 - bank_sys.ζ)
-            update_interbank_loans!(bank_sys)
-            bank_sys.banks[default].b = 0
+            ib_default!(bank_sys.banks[default], bank_sys, liquidation_cost = bank_sys.ζ)       
         end    
         push!(e_t, sum([bank.e for bank in bank_sys.banks]))
     end
 end
 
-function update_interbank_loans!(bank_sys::BankSystem)
-    for bank in bank_sys.banks
-        bank.e -= bank.l - sum(bank_sys.A_ib[bank.id,:])
-        bank.l = sum(bank_sys.A_ib[bank.id,:])
-    end
+function ib_default!(bank::Bank, bank_sys::BankSystem; liquidation_cost::Float64 = 0.05)
+    # write down IB liabilities
+    haircut = (min(bank.c, bank.b) * (1 - liquidation_cost)) / bank.b
+    bank_sys.A_ib[:, bank.id] .*= haircut
+
+    creditors = findall(bank_sys.A_ib[:, bank.id] .> 0)
+
+    for creditor in creditors
+        # realising losses
+        bank_sys.banks[creditor].e -= bank_sys.banks[creditor].l - sum(bank_sys.A_ib[creditor, bank.id])
+
+        # moving IB loans into cash account
+        bank_sys.banks[creditor].c += sum(bank_sys.A_ib[creditor, bank.id])
+        bank_sys.banks[creditor].l = 0
+    end        
+
+    bank.b = bank.e = bank.c = 0
 end
 
+# function update_interbank_loans!(bank_sys::BankSystem)
+#     for bank in bank_sys.banks
+#         bank.e -= bank.l - sum(bank_sys.A_ib[bank.id,:])
+#         bank.l = sum(bank_sys.A_ib[bank.id,:])
+#     end
+# end
 
 function liquidity_call!(calling_bank::Bank, 
                          bank_sys::BankSystem,
@@ -514,18 +530,14 @@ function liquidity_call!(calling_bank::Bank,
         repayment = min.(claim, bank_sys.banks[debtor].n * bank_sys.p_n)
 
         # selling non-liquid assets
-        asset_sale!(bank_sys.banks[debtor], bank_sys, repayment)
+        asset_sale!(bank_sys.banks[debtor], bank_sys, repayment)        
         repayment = min.(claim, bank_sys.banks[debtor].c)
         repayment!(calling_bank, bank_sys.banks[debtor], bank_sys, repayment)
         req_liquidity -= repayment
         
         #### if still not enough then writing down IB liabilities + defaulting ####
         claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor])
-        if claim > 0.001
-            bank_sys.banks[debtor].e = -1
-            bank_sys.A_ib[:, debtor] .= 0
-        end
-        update_interbank_loans!(bank_sys)
+        claim > 0.001 && ib_default!(bank_sys.banks[debtor], bank_sys, liquidation_cost = bank_sys.ζ)        
     end            
 end
 
@@ -535,10 +547,8 @@ function asset_sale!(bank::Bank, bank_sys::BankSystem, amount::Float64)
     bank.c += amount                      # receiving cash
     bank.e -= amount * (1 - bank_sys.p_n) # realising losses 
     # market impact
-    bank_sys.p_n *= exp(-(amount / sum([bank.n for bank in bank_sys.banks])))
+    bank_sys.p_n *= exp(1.1*-(amount / sum([bank.n for bank in bank_sys.banks])))
 end
-
-
 
 function repayment!(calling_bank::Bank, debtor::Bank, bank_sys::BankSystem, amount::Float64)
     # sanity check,  not useful in practice

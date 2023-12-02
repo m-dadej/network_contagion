@@ -547,7 +547,7 @@ function asset_sale!(bank::Bank, bank_sys::BankSystem, amount::Float64)
     bank.c += amount                      # receiving cash
     bank.e -= amount * (1 - bank_sys.p_n) # realising losses 
     # market impact
-    bank_sys.p_n *= exp(1.1*-(amount / sum([bank.n for bank in bank_sys.banks])))
+    bank_sys.p_n *= exp(-(amount / sum([bank.n for bank in bank_sys.banks])))
 end
 
 function repayment!(calling_bank::Bank, debtor::Bank, bank_sys::BankSystem, amount::Float64)

@@ -1,6 +1,7 @@
 using Pkg
-#Pkg.add.(["DelimitedFiles", "CSV", "DataFrames"])
+#Pkg.add.(["DataFramesMeta", "Plots", "DelimitedFiles", "CSV", "DataFrames"])
 using DelimitedFiles
+using Plots
 using CSV
 using DataFrames
 using DataFramesMeta 
@@ -12,9 +13,9 @@ include("optim_alloc_nlopt.jl")
 d = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
 e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
 
-n_sim = 100
-σ_ss_params = [-1.5, -0.75, 0.0]
-σ_params = [1.0, 2.0, 3.0] .+ 0.001
+n_sim = 50
+σ_ss_params = [-1.5, -0.75, 0.0]#collect(-1.5:0.05:0.0)
+σ_params = collect(0.0:1.0:5.0) .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
@@ -49,7 +50,7 @@ for σ_ss in σ_ss_params
             
             populate!(bank_sys, 
                         N = length(d), 
-                        r_n = rand(Uniform(0.0, 0.15), length(d)), 
+                        r_n = rand(Uniform(0.05, 0.1), length(d)), 
                         σ = rand([σ], length(d)),
                         d = d,
                         e = e)   
@@ -92,15 +93,26 @@ for σ_ss in σ_ss_params
     end
 end
 
-CSV.write("data/results_lrisk.csv", results)
+heatmap(σ_ss_params, σ_params, Matrix(heatmap_df)[:,2:end])
 
-quantile(results.n_default, collect(0.5:0.1:1.0))
-
-@chain results begin
+heatmap_df = @chain results begin
     groupby([:σ, :σ_ss])
     combine(:n_default => mean)
     sort()
     unstack(:σ, :n_default_mean)
+end
+
+CSV.write("data/results_lrisk.csv", results)
+
+quantile(results.n_default, collect(0.5:0.1:1.0))
+
+heatmap(σ_ss_params, σ_params, Matrix(heatmap_df)[:,2:end])
+
+@chain results begin
+    groupby([:σ_ss])
+    combine(:n_default => mean)
+    sort()
+    #unstack(:σ, :n_default_mean)
 end    
 
 @chain results begin
@@ -116,6 +128,7 @@ names(select(results, Not(:σ_ss)))
 names(results)
 @chain results begin
     #select(Not(:σ_ss))
+    select([:n_default, :σ_ss])
     Matrix()
     cor()
 end

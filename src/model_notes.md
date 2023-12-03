@@ -1,4 +1,4 @@
-- sproboj dodac stope zwrotu z cashu - moze wtedy banki beda braly wiecej cashu i bedzie mniej bankructw wraz z wyzsza sigma.
+- daj r_n na podstawie rozkladu ROA z danych empirycznych
 
 Analiza jaki jest wynik w zaleznosci od charakterystyk pierwszego bankructwa? (e.g. czy jak maly bank padnie to moze byc duzy problem dla systemu?)
 

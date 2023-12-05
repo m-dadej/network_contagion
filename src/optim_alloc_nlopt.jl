@@ -1,5 +1,5 @@
 function utility(x::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T      
-    prof = (bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4]) #+ x[1] * 0.02
+    prof = (bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4]) + x[1] * 0.01
     prof = max(prof, 0) # otherwise we have a domain error
     σ_prof = (x[2]^2 * bank.σ_rn + x[3]^2 * (bank.σ_rn * (bank_sys.ω_l / bank_sys.ω_n))) - (x[4] * bank_sys.r_l)^2 * bank_sys.ζ^2 * (1 - (bank_sys.ζ * bank_sys.exp_δ))^(-4) * bank_sys.σ_δ
     return prof^(1-bank.σ)/(1-bank.σ) - (((bank.σ/2)*(prof)^(-(1+bank.σ))) * σ_prof)
@@ -63,7 +63,7 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     # profit inequality is necessery as otherwise the objective function have a domain error
     inequality_constraint!(opt, (x, fΔ_prof) -> prof_inequality(x, fΔ_prof, bank, bank_sys))
 
-    s = bank_sys.banks[1].e + bank_sys.banks[1].d
+    s = bank.e + bank.d
     b = bank.d * 0
     c = bank.d * (bank_sys.α + 0.2)
     dec_params = (s + b - c)

@@ -13,9 +13,15 @@ include("optim_alloc_nlopt.jl")
 d = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
 e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
 
+bs = CSV.read("data/eba_stresstest2015.csv", DataFrame, header = 0, decimal = ',')
+bs = sort(bs ./ 1_000_000, rev = true)
+
+d = bs[1:5:50, 2]
+e = bs[1:5:50, 1]
+
 n_sim = 50
-σ_ss_params = [-1.5, -0.75, 0.0]#collect(-1.5:0.05:0.0)
-σ_params = collect(0.0:1.0:5.0) .+ 0.001
+σ_ss_params = [0.0, -4.0]#collect(-1.5:0.05:0.0)
+σ_params = collect(4:2:10) .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
@@ -37,9 +43,8 @@ for σ_ss in σ_ss_params
         for sim in 1:n_sim
             seed = rand(1:10000000000)
             Random.seed!(seed)
-
-            println("seed: $seed | sim: $sim / $n_sim | σ = $σ / $(σ_params[end]) | σ_ss = $σ_ss / $(maximum(σ_ss_params))")
-            bank_sys = BankSystem(α = 0.05,
+            #println("seed: $seed | sim: $sim / $n_sim | σ = $σ / $(σ_params[end]) | σ_ss = $σ_ss / $(maximum(σ_ss_params))")
+            bank_sys = BankSystem(α = 0.01,
                                     ω_n = 1.0, 
                                     ω_l = 0.6, 
                                     γ = 0.06,
@@ -50,28 +55,30 @@ for σ_ss in σ_ss_params
             
             populate!(bank_sys, 
                         N = length(d), 
-                        r_n = rand(Uniform(0.05, 0.1), length(d)), 
+                        r_n = rand(Uniform(0.0, 0.1), length(d)), 
                         σ = rand([σ], length(d)),
                         d = d,
                         e = e)   
 
             super_spreader!(bank_sys, σ_ss)
-            equilibrium!(bank_sys, verbose = false)      
+            equilibrium!(bank_sys, verbose = false, min_iter = 20)      
 
             if maximum(balance_check(bank_sys)) > 0.001
                 @warn "balance sheet identity not satisfied"
                 continue
             end                
 
-            println("max BS diff: ", maximum(balance_check(bank_sys)))
-            get_market_balance(bank_sys)
+            println("max BS diff: ", maximum(balance_check(bank_sys)), " | imbalance: $(round(get_market_balance(bank_sys)))")
             adjust_imbalance!(bank_sys)
             try
                 fund_matching!(bank_sys, 0.3)    
             catch
-                @warn "NO fund_matching solution!"
-                #fund_matching!(bank_sys, 1.0)  
-                continue
+                try
+                    fund_matching!(bank_sys, 0.5)  
+                catch
+                    @warn "NO fund_matching solution!"
+                    continue
+                end
             end
             
             res_sim = DataFrame(σ = [σ],
@@ -109,10 +116,10 @@ quantile(results.n_default, collect(0.5:0.1:1.0))
 heatmap(σ_ss_params, σ_params, Matrix(heatmap_df)[:,2:end])
 
 @chain results begin
-    groupby([:σ_ss])
+    groupby([:σ_ss, :σ])
     combine(:n_default => mean)
     sort()
-    #unstack(:σ, :n_default_mean)
+    unstack(:σ, :n_default_mean)
 end    
 
 @chain results begin

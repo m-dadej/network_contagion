@@ -1,5 +1,5 @@
 using Pkg
-Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
+#Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
 using Random
 using Distributions
 #using Plots
@@ -125,7 +125,7 @@ function super_spreader!(bank_sys::BankSystem, σ_ss::Float64)
     N = length(bank_sys.banks)
     super_s = rand(1:N)
     
-    bank_sys.banks[super_s].σ +=  σ_ss
+    bank_sys.banks[super_s].σ += σ_ss
     
     for i in 1:N 
         bank_sys.banks[i].σ -= i == super_s ? 0 : σ_ss/(N-1)   
@@ -194,11 +194,11 @@ end
 #     return sum(optim_vars[:,3]) - sum(optim_vars[:, 4])
 # end    
 
-function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 20, verbose = true)
+function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 10, verbose = true)
 
     tol = tol < 0 ? length(bank_sys.banks)*2 : tol
 
-    params = (r_l = [0.05, 0.05], diff = [10000, Inf], up_bound = [0.1], low_bound = [0.0])
+    params = (r_l = [0.1, 0.1], diff = [10000, Inf], up_bound = [0.2], low_bound = [0.0])
 
     while (abs(params.diff[end]) > tol) && ((abs(params.diff[end] - params.diff[end-1]) > 1) | length(params.diff) < min_iter)
         verbose && println("\n iteration: r_l: ", params.r_l[end], " | imbalance: ", round(params.diff[end])) 
@@ -436,13 +436,13 @@ function contagion_liq!(bank_sys::BankSystem)
     e_t = [0, sum([bank.e for bank in bank_sys.banks])]
 
     # while no change in equity
-    while !isapprox(e_t[end-1] - e_t[end], 0, atol = 1e-5) 
+    while (!isapprox(e_t[end-1] - e_t[end], 0, atol = 1e-5)) || (e_t[end] == NaN)
 
         defaults = findall(x -> x.e <= 0, bank_sys.banks)
 
         # repaying deposits with cash
         for default in defaults
-            asset_sale!(bank_sys.banks[default], bank_sys, bank_sys.banks[default].n)
+            asset_sale!(bank_sys.banks[default], bank_sys, max(0, bank_sys.banks[default].n))
             repayment = min(bank_sys.banks[default].c, bank_sys.banks[default].d)
             bank_sys.banks[default].d -= repayment
             bank_sys.banks[default].c  -= repayment
@@ -463,6 +463,7 @@ function contagion_liq!(bank_sys::BankSystem)
         end    
         push!(e_t, sum([bank.e for bank in bank_sys.banks]))
     end
+
 end
 
 function ib_default!(bank::Bank, bank_sys::BankSystem; liquidation_cost::Float64 = 0.05)
@@ -526,12 +527,14 @@ function liquidity_call!(calling_bank::Bank,
         req_liquidity -= repayment
 
         #### if still not enough then repaying with non-liquid assets ####
-        claim = min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor])
-        repayment = min.(claim, bank_sys.banks[debtor].n * bank_sys.p_n)
-
+        claim = max(0, min.(req_liquidity, bank_sys.A_ib[calling_bank.id, debtor]))
+        # bank can repay only what it has (after considering the market impact) or owns 
+        claim == 0.0 && continue
+        repayment = min(impact_equivalent(bank_sys, claim), post_impact(bank_sys, bank_sys.banks[debtor].n))
+        
         # selling non-liquid assets
         asset_sale!(bank_sys.banks[debtor], bank_sys, repayment)        
-        repayment = min.(claim, bank_sys.banks[debtor].c)
+        repayment = min(claim, bank_sys.banks[debtor].c)
         repayment!(calling_bank, bank_sys.banks[debtor], bank_sys, repayment)
         req_liquidity -= repayment
         
@@ -541,14 +544,45 @@ function liquidity_call!(calling_bank::Bank,
     end            
 end
 
-function asset_sale!(bank::Bank, bank_sys::BankSystem, amount::Float64)
-    amount = max(0, amount)
-    bank.n -= amount * bank_sys.p_n^(-1)  # selling non-liquid assets
-    bank.c += amount                      # receiving cash
-    bank.e -= amount * (1 - bank_sys.p_n) # realising losses 
-    # market impact
-    bank_sys.p_n *= exp(-(amount / sum([bank.n for bank in bank_sys.banks])))
+function market_impact(bank_sys::BankSystem, amount::Float64; β::Float64 = 1.0)
+    return bank_sys.p_n * exp(β * -(amount / sum([bank.n for bank in bank_sys.banks])))
 end
+
+"""
+    post_impact(bank_sys::BankSystem, amount::Float64)
+
+Returns value of amount after market impact    
+"""
+function post_impact(bank_sys::BankSystem, amount::Float64)
+    post_price = bank_sys.p_n * market_impact(bank_sys, amount)
+    return post_price * amount
+end
+
+function asset_sale!(bank::Bank, bank_sys::BankSystem, amount::Float64)
+    # sanity check,  not useful in practice
+    amount < 0 && error("negative amount to sell: $(amount)")
+
+    bank.n -= amount                                # selling non-liquid assets
+    bank_sys.p_n *= market_impact(bank_sys, amount) # market impact
+    bank.c += amount * bank_sys.p_n                 # receiving cash
+    bank.e -= amount * (1 - bank_sys.p_n)           # realising losses
+end
+
+"""
+    impact_equivalent(bank_sys::BankSystem, amount::Float64; recursion_error::Float64 = 0.02)
+
+Given amount of non-liquid assets, returns amount required to sell to get the same amount of cash after market impact    
+recursion_error is needed to adjust for the lack of recursion of the function
+"""
+function impact_equivalent(bank_sys::BankSystem, amount::Float64; recursion_error::Float64 = 0.02)
+    
+    if amount == 0.0
+        return 0.0
+    else
+        post_price = bank_sys.p_n * market_impact(bank_sys, amount)
+        return amount * post_price^(-1) * (1 + recursion_error)
+    end        
+end    
 
 function repayment!(calling_bank::Bank, debtor::Bank, bank_sys::BankSystem, amount::Float64)
     # sanity check,  not useful in practice

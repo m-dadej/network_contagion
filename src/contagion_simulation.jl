@@ -19,21 +19,22 @@ bs = sort(bs ./ 1_000_000, rev = true)
 d = bs[1:5:50, 2]
 e = bs[1:5:50, 1]
 
-n_sim = 50
+
+n_sim = 40
 σ_ss_params = [0.0, -4.0]#collect(-1.5:0.05:0.0)
-σ_params = collect(4:2:10) .+ 0.001
+σ_params = [2.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
 #results = CSV.read("results_nlopt.csv", DataFrame)
 
-results = DataFrame(σ = Float64[],
-                    σ_ss = Float64[],
-                    n_default = Int64[],
-                    degree = Float64[],
-                    interm = Int64[],
-                    eq_r_l = Float64[],
-                    mean_liq = Float64[],
+results = DataFrame(σ           = Float64[],
+                    σ_ss        = Float64[],
+                    n_default   = Int64[],
+                    degree      = Float64[],
+                    interm      = Int64[],
+                    eq_r_l      = Float64[],
+                    mean_liq    = Float64[],
                     mean_ib_share = Float64[],
                     mean_eq_req = Float64[],
                     mean_n_share = Float64[])
@@ -43,10 +44,10 @@ for σ_ss in σ_ss_params
         for sim in 1:n_sim
             seed = rand(1:10000000000)
             Random.seed!(seed)
-            #println("seed: $seed | sim: $sim / $n_sim | σ = $σ / $(σ_params[end]) | σ_ss = $σ_ss / $(maximum(σ_ss_params))")
-            bank_sys = BankSystem(α = 0.01,
+            println("seed: $seed | sim: $sim / $n_sim | σ = $σ / $(σ_params[end]) | σ_ss = $σ_ss / $(σ_ss[end])")
+            bank_sys = BankSystem(α = 0.05,
                                     ω_n = 1.0, 
-                                    ω_l = 0.6, 
+                                    ω_l = 0.7, 
                                     γ = 0.06,
                                     τ = 0.02, 
                                     ζ = 0.5, 
@@ -56,17 +57,22 @@ for σ_ss in σ_ss_params
             populate!(bank_sys, 
                         N = length(d), 
                         r_n = rand(Uniform(0.0, 0.1), length(d)), 
-                        σ = rand([σ], length(d)),
+                        σ = rand(Normal(σ, 0.1), length(d)), #rand([σ], length(d)),
                         d = d,
                         e = e)   
 
             super_spreader!(bank_sys, σ_ss)
-            equilibrium!(bank_sys, verbose = false, min_iter = 20)      
+            equilibrium!(bank_sys, verbose = false, min_iter = 50)      
 
             if maximum(balance_check(bank_sys)) > 0.001
                 @warn "balance sheet identity not satisfied"
                 continue
             end                
+
+            if abs(get_market_balance(bank_sys)) > length(d)*50
+                @warn "market imbalance too high: $(round(get_market_balance(bank_sys))) -> no equilibrium convergence"
+                continue
+            end
 
             println("max BS diff: ", maximum(balance_check(bank_sys)), " | imbalance: $(round(get_market_balance(bank_sys)))")
             adjust_imbalance!(bank_sys)
@@ -109,6 +115,8 @@ heatmap_df = @chain results begin
     unstack(:σ, :n_default_mean)
 end
 
+results.eq_r_l
+
 CSV.write("data/results_lrisk.csv", results)
 
 quantile(results.n_default, collect(0.5:0.1:1.0))
@@ -116,14 +124,14 @@ quantile(results.n_default, collect(0.5:0.1:1.0))
 heatmap(σ_ss_params, σ_params, Matrix(heatmap_df)[:,2:end])
 
 @chain results begin
-    groupby([:σ_ss, :σ])
+    groupby([:σ])
     combine(:n_default => mean)
     sort()
-    unstack(:σ, :n_default_mean)
+    #unstack(:σ, :n_default_mean)
 end    
 
 @chain results begin
-    groupby(:σ)
+    groupby([:σ_ss])
     combine([:n_default, :interm, :degree, :eq_r_l] .=> mean)
     #combine([:mean_n_share, :mean_liq, :mean_ib_share] .=> mean)
     sort()
@@ -142,11 +150,11 @@ end
 
 
 @chain results begin
-    groupby([:σ, :σ_ss])
-    combine(:n_default => x -> sum(x .> 2)/sum(x .> 0))
+    groupby([:σ_ss])
+    combine(:n_default => x -> sum(x .> 1)/sum(x .> 0))
     #combine(nrow => :count)
     sort()
-    unstack(:σ, :n_default_function)
+    #unstack(:σ, :n_default_function)
 end    
 
  sort(combine(groupby(results, [:σ, :σ_ss]), [:n_default, :degree] .=> mean))

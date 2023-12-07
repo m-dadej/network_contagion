@@ -221,7 +221,7 @@ function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 10, verbose =
             push!(params.r_l, (params.r_l[end] + params.up_bound[end])/2)
         end
     end
-    
+
     bank_sys.r_l = params.r_l[findmin(abs.(params.diff))[2]-1]
 
     # optim_allocation!.(bank_sys.banks, bank_sys) ?
@@ -256,7 +256,7 @@ function fund_matching!(bank_sys::BankSystem, max_expo = 0.1)
     bank_sys.A_ib = fund_matching([bank.l for bank in bank_sys.banks],
                                   [bank.b for bank in bank_sys.banks],
                                   [bank.σ for bank in bank_sys.banks], 
-                                  leverage(bank_sys), 
+                                  ([bank.c / assets(bank, bank_sys) for bank in bank_sys.banks]).^(-1), 
                                   [bank.c + bank.n + bank.l for bank in bank_sys.banks],
                                   max_expo)
 end
@@ -284,7 +284,9 @@ function fund_matching(l, b, σ, k, A, max_expo)
     end
 
     for i in 1:N 
-        @constraint(fund_matching_optim, A_ib[:, i] ./ A[i] .<= max_expo)  
+        for j in 1:N
+            @constraint(fund_matching_optim, A_ib[i, j] / A[i] <= max_expo)  
+        end            
     end
     
     #@objective(fund_matching_optim, Max,  sum(σ[i] * (A_ib[i,:]'capital_rate) for i in 1:N))
@@ -461,10 +463,28 @@ function contagion_liq!(bank_sys::BankSystem)
         for default in defaults
             ib_default!(bank_sys.banks[default], bank_sys, liquidation_cost = bank_sys.ζ)       
         end    
+
+        # tutaj dodaj ze jak unrealized losses wieksze niz equity to default
+
+
         push!(e_t, sum([bank.e for bank in bank_sys.banks]))
     end
 
 end
+
+
+# function to default banks when loss on non-liquid assets is greater than equity
+
+function unrealized_default!(bank_sys::BankSystem)
+    for bank in bank_sys.banks
+        unrealized = assets(bank, bank_sys, valuation = "book") - assets(bank, bank_sys, valuation = "market")
+        if  unrealized > bank.e
+            bank.e = 0.0
+            bank.n *= bank_sys.p_n
+        end            
+    end        
+end    
+
 
 function ib_default!(bank::Bank, bank_sys::BankSystem; liquidation_cost::Float64 = 0.05)
     # write down IB liabilities
@@ -475,22 +495,17 @@ function ib_default!(bank::Bank, bank_sys::BankSystem; liquidation_cost::Float64
 
     for creditor in creditors
         # realising losses
-        bank_sys.banks[creditor].e -= bank_sys.banks[creditor].l - sum(bank_sys.A_ib[creditor, bank.id])
+        loss = bank_sys.banks[creditor].l - sum(bank_sys.A_ib[creditor, :])
+        bank_sys.banks[creditor].e -= loss
 
         # moving IB loans into cash account
-        bank_sys.banks[creditor].c += sum(bank_sys.A_ib[creditor, bank.id])
-        bank_sys.banks[creditor].l = 0
+        bank_sys.banks[creditor].c += bank_sys.A_ib[creditor, bank.id]
+        bank_sys.banks[creditor].l -= (bank_sys.A_ib[creditor, bank.id] + loss)
     end        
 
+    bank_sys.A_ib[:, bank.id] .= 0
     bank.b = bank.e = bank.c = 0
 end
-
-# function update_interbank_loans!(bank_sys::BankSystem)
-#     for bank in bank_sys.banks
-#         bank.e -= bank.l - sum(bank_sys.A_ib[bank.id,:])
-#         bank.l = sum(bank_sys.A_ib[bank.id,:])
-#     end
-# end
 
 function liquidity_call!(calling_bank::Bank, 
                          bank_sys::BankSystem,

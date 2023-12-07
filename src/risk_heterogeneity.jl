@@ -427,11 +427,11 @@ function contagion!(bank_sys::BankSystem)
     end
 end
 
-function contagion_liq!(bank_sys::BankSystem)
+function contagion_liq!(bank_sys::BankSystem, shocked_bank::Int64)
     
-    # shock
-    N = length(bank_sys.banks)
-    shocked_bank = rand(1:N)
+    # # shock
+    # N = length(bank_sys.banks)
+    # shocked_bank = rand(1:N)
 
     bank_sys.banks[shocked_bank].e = 0 # shock to equity
 
@@ -464,26 +464,10 @@ function contagion_liq!(bank_sys::BankSystem)
             ib_default!(bank_sys.banks[default], bank_sys, liquidation_cost = bank_sys.ζ)       
         end    
 
-        # tutaj dodaj ze jak unrealized losses wieksze niz equity to default
-
-
         push!(e_t, sum([bank.e for bank in bank_sys.banks]))
     end
 
 end
-
-
-# function to default banks when loss on non-liquid assets is greater than equity
-
-function unrealized_default!(bank_sys::BankSystem)
-    for bank in bank_sys.banks
-        unrealized = assets(bank, bank_sys, valuation = "book") - assets(bank, bank_sys, valuation = "market")
-        if  unrealized > bank.e
-            bank.e = 0.0
-            bank.n *= bank_sys.p_n
-        end            
-    end        
-end    
 
 
 function ib_default!(bank::Bank, bank_sys::BankSystem; liquidation_cost::Float64 = 0.05)

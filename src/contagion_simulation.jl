@@ -5,6 +5,21 @@ using Plots
 using CSV
 using DataFrames
 using DataFramesMeta 
+import HypothesisTests: OneSampleTTest
+
+
+# inoltre
+# sprecare
+# acquistare
+# aumentare
+# riduciare
+# salutare
+# mangiare sano
+# serve
+# ci sta
+# spaventato
+# ti vadi?
+# piu forma di noi
 
 include("risk_heterogeneity.jl")
 include("optim_alloc_nlopt.jl")
@@ -20,9 +35,9 @@ d = bs[1:5:50, 2]
 e = bs[1:5:50, 1]
 
 
-n_sim = 40
-σ_ss_params = [0.0, -4.0]#collect(-1.5:0.05:0.0)
-σ_params = [2.0] .+ 0.001
+n_sim = 50
+σ_ss_params = [-6.0, 0.0]#collect(-1.5:0.05:0.0)
+σ_params = [3.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
@@ -33,6 +48,7 @@ results = DataFrame(σ           = Float64[],
                     n_default   = Int64[],
                     degree      = Float64[],
                     interm      = Int64[],
+                    interm_assets = Float64[],
                     eq_r_l      = Float64[],
                     mean_liq    = Float64[],
                     mean_ib_share = Float64[],
@@ -45,19 +61,21 @@ for σ_ss in σ_ss_params
             seed = rand(1:10000000000)
             Random.seed!(seed)
             println("seed: $seed | sim: $sim / $n_sim | σ = $σ / $(σ_params[end]) | σ_ss = $σ_ss / $(σ_ss[end])")
+            
             bank_sys = BankSystem(α = 0.05,
                                     ω_n = 1.0, 
                                     ω_l = 0.7, 
                                     γ = 0.06,
-                                    τ = 0.02, 
-                                    ζ = 0.5, 
-                                    exp_δ = 0.01, 
-                                    σ_δ = 0.01)
+                                    τ = 0.03, 
+                                    ζ = 0.6, 
+                                    exp_δ = 0.001, 
+                                    σ_δ = 0.001)
             
+            N = length(d)                                    
             populate!(bank_sys, 
-                        N = length(d), 
-                        r_n = rand(Uniform(0.0, 0.1), length(d)), 
-                        σ = rand(Normal(σ, 0.1), length(d)), #rand([σ], length(d)),
+                        N = N, 
+                        r_n = rand(Uniform(0.0, 0.1), N), 
+                        σ = rand(Normal(σ, 0.1), N), #rand([σ], length(d)),
                         d = d,
                         e = e)   
 
@@ -69,7 +87,7 @@ for σ_ss in σ_ss_params
                 continue
             end                
 
-            if abs(get_market_balance(bank_sys)) > length(d)*50
+            if abs(get_market_balance(bank_sys)) > N*50
                 @warn "market imbalance too high: $(round(get_market_balance(bank_sys))) -> no equilibrium convergence"
                 continue
             end
@@ -77,34 +95,64 @@ for σ_ss in σ_ss_params
             println("max BS diff: ", maximum(balance_check(bank_sys)), " | imbalance: $(round(get_market_balance(bank_sys)))")
             adjust_imbalance!(bank_sys)
             try
-                fund_matching!(bank_sys, 0.3)    
+                fund_matching!(bank_sys, 0.1)    
             catch
                 try
-                    fund_matching!(bank_sys, 0.5)  
+                    fund_matching!(bank_sys, 0.3)  
                 catch
                     @warn "NO fund_matching solution!"
                     continue
                 end
             end
-            
-            res_sim = DataFrame(σ = [σ],
+
+            if length(intermediators(bank_sys)) != 0
+                interm_ass = min(bank_sys.banks[intermediators(bank_sys)[1]].b,
+                             bank_sys.banks[intermediators(bank_sys)[1]].l)
+            else
+                interm_ass = 0
+            end                
+
+            for shocked_bank in 1:N
+                println("shocked bank $shocked_bank")
+                bank_sys_scenario = deepcopy(bank_sys)
+                res_sim = DataFrame(σ = [σ],
                                 σ_ss = [σ_ss],
                                 n_default = [0],
                                 degree = [degree(bank_sys)],
                                 interm = [length(intermediators(bank_sys))],
+                                interm_assets = [interm_ass],
                                 eq_r_l = [bank_sys.r_l],
                                 mean_liq = [mean(liquidity(bank_sys))],
                                 mean_ib_share = [mean(ib_share(bank_sys))],
                                 mean_eq_req = [mean(equity_requirement(bank_sys))],
                                 mean_n_share = [mean(bank.n / assets(bank, bank_sys) for bank in bank_sys.banks)])
                       
-            contagion_liq!(bank_sys)
+                contagion_liq!(bank_sys_scenario, shocked_bank)
 
-            res_sim.n_default[1] = n_default(bank_sys)
-            results = [results; res_sim]
+                res_sim.n_default[1] = n_default(bank_sys_scenario)
+                results = [results; res_sim]
+            end                            
         end
     end
 end
+
+
+length(results[results.σ_ss .!= 0.0,:].n_default)
+
+OneSampleTTest(results[results.σ_ss .!= 0.0,:].n_default, 
+               results[results.σ_ss .== 0.0,:].n_default)
+
+mean(results[results.σ_ss .!= 0.0, :].n_defaul)
+
+
+t_test(results[results.σ_ss .== 0.0, :].n_default, results[results.σ_ss .!= 0.0, :].n_default)
+
+function t_test(x_1, x_2)
+    var(x) = (std(x) / sqrt(length(x)))^2
+    s = sqrt(var(x_1) + var(x_2))
+    t = (mean(x_1) - mean(x_2)) / s
+    return t
+end    
 
 heatmap(σ_ss_params, σ_params, Matrix(heatmap_df)[:,2:end])
 
@@ -114,6 +162,7 @@ heatmap_df = @chain results begin
     sort()
     unstack(:σ, :n_default_mean)
 end
+
 
 results.eq_r_l
 
@@ -137,6 +186,8 @@ end
     sort()
 end    
 
+results.interm_assets
+
 cor(results.n_default, results.degree)
 
 names(select(results, Not(:σ_ss)))
@@ -151,7 +202,7 @@ end
 
 @chain results begin
     groupby([:σ_ss])
-    combine(:n_default => x -> sum(x .> 1)/sum(x .> 0))
+    combine(:n_default => x -> sum(x .> 12)/sum(x .> 0))
     #combine(nrow => :count)
     sort()
     #unstack(:σ, :n_default_function)

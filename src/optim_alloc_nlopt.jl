@@ -6,6 +6,14 @@ function utility(x::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T
     return prof^(1-bank.σ)/(1-bank.σ) - (((bank.σ/2)*(prof)^(-(1+bank.σ))) * σ_prof)
 end
 
+# function utility(x::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T      
+#     prof = (bank.r_n * x[2] + bank_sys.r_l * x[3]) - (bank_sys.r_l * x[4]) #+ x[1] * 0.02
+#     prof = max(prof, 0) # otherwise we have a domain error
+#     σ_prof = (x[2]^2 * bank.σ_rn + x[3]^2 * (bank.σ_rn * (bank_sys.ω_l / bank_sys.ω_n))) - (x[4] * bank_sys.r_l)^2
+#     #σ_prof = (x[2]^2 * bank.σ_rn) - (x[4] * bank_sys.r_l)^2
+#     return prof^(1-bank.σ)/(1-bank.σ) - (((bank.σ/2)*(prof)^(-(1+bank.σ))) * σ_prof)
+# end
+
 function obj_f(x::AbstractVector{T}, fΔ::AbstractVector{T},  bank::Bank, bank_sys::BankSystem) where T
     
     if length(fΔ) > 0

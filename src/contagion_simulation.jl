@@ -8,30 +8,6 @@ using DataFramesMeta
 import HypothesisTests: OneSampleTTest
 
 
-# il filo 
-# apressa
-# entrembi
-# inoltre
-# sprecare
-# acquistare
-# aumentare
-# riduciare
-# salutare
-# mangiare sano
-# serve
-# da parte
-# ci sta
-# spaventato
-# ti vadi?
-# piu forma di noi
-# c'e la fai
-# pesante - cięzki
-# disastro
-# pella
-# scappato
-# indossare
-# sposato
-# non postare
 # cioe
 # jak uzywac sbagliato
 
@@ -46,17 +22,17 @@ e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.
 bs = CSV.read("data/eba_stresstest2015.csv", DataFrame, header = 0, decimal = ',')
 bs = sort(bs ./ 1_000_000, rev = true)
 
-d = bs[:, 2]
-e = bs[:, 1]
+d = bs[1:5:50, 2]
+e = bs[1:5:50, 1]
 
 
 n_sim = 10
-σ_ss_params = -collect(2:0.1:6.0)
+σ_ss_params = -collect(0:1:6.0)
 σ_params = [4.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
-#results = CSV.read("results_nlopt.csv", DataFrame)
+results = CSV.read("data/results_done.csv", DataFrame)
 
 results = DataFrame(σ             = Float64[],
                     σ_ss          = Float64[],
@@ -115,10 +91,10 @@ for σ_ss in σ_ss_params
             println("max BS diff: ", maximum(balance_check(bank_sys)), " | imbalance: $(round(get_market_balance(bank_sys)))")
             adjust_imbalance!(bank_sys)
             try
-                fund_matching!(bank_sys, 0.1)    
+                fund_matching!(bank_sys, 0.3)    
             catch
                 try
-                    fund_matching!(bank_sys, 0.25)  
+                    fund_matching!(bank_sys, 0.5)  
                 catch
                     @warn "NO fund_matching solution!"
                     continue
@@ -161,10 +137,10 @@ end
 using Plots
 
 plot_df = @chain results begin
-    transform(:σ_ss => x -> round.(x), renamecols = false)
+    #transform(:σ_ss => x -> round.(x), renamecols = false)
     groupby([:σ_ss])
-    combine(:n_default => x -> sum(x .> 20)/sum(x .> 0))
-    #combine(:n_default => mean)
+    #combine(:n_default => x -> sum(x .> 1)/sum(x .> 0))
+    combine(:n_default => mean)
     sort()
     #unstack(:σ, :n_default_mean)
 end
@@ -187,7 +163,7 @@ end
 
 results.eq_r_l
 
-CSV.write("data/results_done.csv", results)
+CSV.write("data/results_10banks.csv", results)
 
 quantile(results.n_default, [0.5, 0.75, 0.8, 0.9, 0.95, 0.99, 1.0])
 

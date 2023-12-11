@@ -6,7 +6,7 @@ using CSV
 using DataFrames
 using DataFramesMeta 
 import HypothesisTests: OneSampleTTest
-
+using Plots
 
 # cioe
 # jak uzywac sbagliato
@@ -26,13 +26,13 @@ d = bs[1:5:50, 2]
 e = bs[1:5:50, 1]
 
 
-n_sim = 10
+n_sim = 100
 σ_ss_params = -collect(0:1:6.0)
 σ_params = [4.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
-results = CSV.read("data/results_done.csv", DataFrame)
+results = CSV.read("data/results_10banks.csv", DataFrame)
 
 results = DataFrame(σ             = Float64[],
                     σ_ss          = Float64[],
@@ -134,12 +134,12 @@ for σ_ss in σ_ss_params
     end
 end
 
-using Plots
+
 
 plot_df = @chain results begin
     #transform(:σ_ss => x -> round.(x), renamecols = false)
     groupby([:σ_ss])
-    #combine(:n_default => x -> sum(x .> 1)/sum(x .> 0))
+    #combine(:n_default => x -> sum(x .> 9)/sum(x .> 0))
     combine(:n_default => mean)
     sort()
     #unstack(:σ, :n_default_mean)

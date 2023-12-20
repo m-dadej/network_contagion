@@ -24,6 +24,9 @@ df_rets.apply(lambda x: x.isna().sum(), axis=1)
 
 bank_indx = df_rets.apply(lambda x: x.mean(), axis=1)
 
+stoxx = pd.read_excel("data/stoxx_banks.xlsx").sort_index(ascending=False)
+stoxx['stoxx'] = stoxx['stoxx'].pct_change()
+
 cor_ts = df_rets\
     .fillna(0)\
     .rolling(100, min_periods = 100)\
@@ -41,6 +44,7 @@ df_rets\
     .join(cor_ts)\
     .join(bank_indx)\
     .join(spread)\
+    .join(stoxx)\
     .to_csv("data/bank_cor.csv") 
 
 # robust yet fragile

@@ -3,6 +3,7 @@ using DataFrames
 using CSV
 using Statistics
 using Plots
+using GLM
 
 # function to remove outlier from a matrix of data
 
@@ -21,7 +22,7 @@ end
 # Load data
 data = CSV.read("data/bank_cor.csv", DataFrame)
 
-df_model = Matrix(dropmissing(data[:, ["stoxx", "cor", "spread"]]))
+df_model = Matrix(dropmissing(data[:, ["stoxx", "cor", "spread_ch"]]))
 
 df_model = remove_outlier(df_model)
 
@@ -41,18 +42,30 @@ model = MSModel(df_model[2:end,1], 2,
                 exog_switching_vars = exog_switch,
                 exog_tvtp = tvtp,
                 random_search_em = 20,
-                random_search = 3)
+                random_search = 3
+                )
 
 summary_msm(model)
 
-plot(df_model[:,3])
+
+cor(df_model[:,1], df_model[:,2])
+
+plot(df_model[:,2])
 
 ed = expected_duration(model)[expected_duration(model)[:,2] .< 100,:]
 plot(ed, label = ["Calm market conditions" "Volatile market conditions"],
          title = "Time-varying expected duration of regimes") 
 
-plot(smoothed_probs(model)[1:200,:],
+mean(expected_duration(model), dims = 1)
+
+plot(smoothed_probs(model),
          label     = ["Calm market conditions" "Volatile market conditions"],
          title     = "Regime probabilities", 
          linewidth = 2,
          legend = :bottomleft)
+
+df_ols = DataFrame(df_model, :auto)[2:end, :]
+df_ols[!, "lag"] = exog
+df_ols[!, "lag_cor"] = exog_switch
+ols = lm(@formula(x1 ~ lag + lag_cor), df_ols)
+

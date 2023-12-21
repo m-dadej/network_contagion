@@ -5,14 +5,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime as dt
 from fredapi import Fred
+from typing import Dict
+
 
 # HERE PASTE THE API KEY FROM FREDAPI
 fred = Fred(api_key='18c2830f79155831d5c485d84472811f')
-spread = fred.get_series('BAMLC0A0CM')
+
+# choose which spread to use - euro or usa
+spread = fred.get_series('BAMLHE00EHYIOAS') # euro
+#spread = fred.get_series('BAMLC0A0CM') # usa
 spread = pd.DataFrame(spread)
 spread.columns = ['spread']
 #spread['spread_ch'] = spread['spread'].pct_change()
 
+# choose which tickers to use - USA or europe
+#tickers = "BAC BK BCS BMO COF SCHW C CFG DB GS JPM MTB MS NTRS PNC STT TD TFC UBS WFC ALLY AXP DFS FITB HSBC HBAN KEY MUFG PNC RF SAN"
 tickers = "EBO.DE RAW.DE KBC.BR CBK.DE DBK.DE NDA-SE.ST DANSKE.CO JYSK.CO SYDB.CO BBVA BKT.MC CABK.MC SAB.MC SAN.MC UNI.MC BNP.PA ACA.PA GLE.PA ALPHA.AT EUROB.AT ETE.AT TPEIR.AT OTP.BD A5G.IR BARC.L BIRG.IR BAMI.MI ISP.MI MB.MI BMPS.MI BPE.MI UCG.MI ABN.AS INGA.AS DNB.OL PKO.WA PEO.WA BCP.LS SEB-A.ST SHB-A.ST SWED-A.ST"
 
 data_raw = yf.download(tickers, start="2000-01-01", group_by='tickers')
@@ -23,14 +30,19 @@ df_rets = data_raw.xs('Close', axis=1, level=1, drop_level=True)\
             
 bank_indx = df_rets.apply(lambda x: x.mean(), axis=1)
 
+# choose which index to use - stoxx or nasdaq banks
 stoxx = pd.read_excel("data/stoxx_banks.xlsx")\
         .sort_index(ascending=False)\
         .set_index('Date')
+        
+# stoxx = pd.DataFrame(yf.download("^BKX", start="2000-01-01", group_by='tickers')['Open'])        
+# stoxx.columns = ['stoxx']
+
 #stoxx['stoxx'] = stoxx['stoxx'].pct_change()
 
 cor_ts = df_rets\
     .fillna(0)\
-    .rolling(100, min_periods = 10)\
+    .rolling(100, min_periods = 100)\
     .corr()\
     .abs()\
     .groupby(level='Date')\
@@ -49,12 +61,12 @@ df = df_rets\
     .join(stoxx)\
     .reset_index()
         
-first_days = df['Date']\
-             .dt.to_period('W')\
-             .dt.to_timestamp()\
-             .unique()   
+# first_days = df['Date']\
+#              .dt.to_period('W')\
+#              .dt.to_timestamp()\
+#              .unique()   
 
-df = df.query('Date in @first_days')
+# df = df.query('Date in @first_days')
 df['spread_ch'] = df['spread'].pct_change()
 df['stoxx'] = df['stoxx'].pct_change()
 

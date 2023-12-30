@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(description="Download stocks data.")
 
 parser.add_argument('--region', type=str, required=True)
 parser.add_argument('--freq', type=str, required=True)
+parser.add_argument('--cor_window', type=int, required=True)
 
 # Parse the arguments
 args = parser.parse_args()
@@ -53,7 +54,7 @@ index.columns = ['index']
 
 cor_ts = df_rets\
     .fillna(0)\
-    .rolling(252, min_periods = 100)\
+    .rolling(args.cor_window, min_periods = args.cor_window - 1)\
     .corr()\
     .abs()\
     .groupby(level='Date')\

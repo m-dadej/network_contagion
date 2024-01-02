@@ -8,6 +8,7 @@ from fredapi import Fred
 from typing import Dict
 import argparse
 from numpy.linalg import eig
+import statsmodels.api as sm
 
 
 # Create the parser
@@ -16,6 +17,7 @@ parser = argparse.ArgumentParser(description="Download stocks data.")
 parser.add_argument('--region', type=str, required=True)
 parser.add_argument('--freq', type=str, required=True)
 parser.add_argument('--cor_window', type=int, required=True)
+parser.add_argument('--eig_k', type=int, required=True)
 
 # Parse the arguments
 args = parser.parse_args()
@@ -52,7 +54,8 @@ df_rets = data_raw.xs('Close', axis=1, level=1, drop_level=True)\
 # subtracting the index returns from the bank returns                
 df_rets = df_rets\
             .loc[:banks_index.index[-1],:]\
-            .sub(banks_index.pct_change().loc[df_rets.index[0]:,:], axis='columns', fill_value=0)
+            .sub(banks_index.pct_change().loc[df_rets.index[0]:,:], axis='columns', fill_value=0)\
+            .iloc[:,0:-1]
      
 banks_index.columns = ['banks_index']        
 index.columns = ['index']
@@ -79,10 +82,52 @@ eigen_ts = df_rets\
     .cov()\
     .fillna(0)\
     .groupby(level='Date')\
-    .apply(lambda x: eig_connect(x, 2))
-
+    .apply(lambda x: eig_connect(x, args.eig_k))
+    
 eigen_ts = pd.DataFrame(eigen_ts)
 eigen_ts.columns = ['eig']
+
+granger = pd.DataFrame({'degree': []})
+
+cor_w = 100
+
+for t in range(cor_w, len(df_rets)):
+    print(t/len(df_rets))
+    window = df_rets.iloc[(t - cor_w):t, :]
+    mat = granger_mat(window)
+    degree = np.nansum(mat) / (mat.shape[0] * mat.shape[1] - mat.shape[0])
+    granger = pd.concat([granger, pd.DataFrame({'degree': [degree]})])
+
+
+def granger_mat(df):
+    
+    granger_mat = np.zeros((df.shape[1], df.shape[1]))
+    
+    for i in range(1, len(df.columns)):
+        for j in range(1, len(df.columns)):
+            
+            if  i == j:
+                granger_mat[i,j] = 0
+                continue
+            
+            if all(df.iloc[:,i].isna()) or all(df.iloc[:,j].isna()):
+                granger_mat[i,j] = np.nan
+                continue
+            
+            _, pval = granger_cause(df.iloc[:, [i,j]])
+            
+            granger_mat[i,j] = 1 if pval < 0.05 else 0
+            #print(df.columns[i], df.columns[j])
+    return granger_mat            
+ 
+def granger_cause(df):
+    pair = pd.concat([df.iloc[:, 0], df.iloc[:, 0:2].shift()], axis=1)\
+        .dropna()
+
+    model = sm.OLS(pair.iloc[:, 0], sm.add_constant(pair.iloc[:, 1:3]))
+    results = model.fit()
+    return results.params[1], results.pvalues[1]
+
 
 df = df_rets\
     .join(cor_ts)\

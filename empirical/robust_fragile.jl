@@ -16,8 +16,9 @@ using GLM
 # args: region us/eu, freq weekly/daily
 run(`python data/stocks_download.py
     --region eu
-    --freq weekly
-    --cor_window 52`)
+    --freq daily
+    --cor_window 200
+    --eig_k 5`)
 
 function remove_outlier(data, m = 3)
     
@@ -31,9 +32,9 @@ end
 
 
 # Load data
-data = CSV.read("data/bank_cor_week.csv", DataFrame)
+data = CSV.read("data/bank_cor.csv", DataFrame)
 
-df_model = Matrix(dropmissing(data[:, ["banks_index", "index", "cor", "spread"]]))
+df_model = Matrix(dropmissing(data[:, ["banks_index", "index", "eig", "spread"]]))
 
 df_model = remove_outlier(df_model, 5)
 
@@ -69,6 +70,11 @@ summary_msm(model)
 
 plot(sqrt.((df_model[:,1] .- df_model[:,2]).^2))
 plot(sqrt.((df_model[:,1]).^2))
+plot(data.cor)
+
+cor(Matrix(dropmissing(data[:, ["cor", "eig"]])))
+
+plot(Matrix(dropmissing(data[:, ["cor", "eig"]])))
 
 cor(df_model[2:end,1], exog_switch)
 

@@ -5,6 +5,7 @@ using Statistics
 using Plots
 using GLM
 
+using Pkg; Pkg.add.(["Distributions", "MarSwitching", "DataFrames", "CSV", "Statistics", "Plots", "GLM"])
 # to do:
 # - odjac kurs sp500 od indeksu 
 # - odjąć tez od kursu banków?

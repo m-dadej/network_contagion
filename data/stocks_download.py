@@ -7,6 +7,7 @@ import datetime as dt
 from fredapi import Fred
 from typing import Dict
 import argparse
+from numpy.linalg import eig
 
 
 # Create the parser
@@ -39,7 +40,6 @@ elif args.region == 'us':
     banks_index = pd.DataFrame(yf.download("^BKX", start="2000-01-01", group_by='tickers')['Open'])        
     index = pd.DataFrame(yf.download("^SPX", start="2000-01-01", group_by='tickers')['Open'])        
 
-
 spread = pd.DataFrame(spread)
 spread.columns = ['spread']   
 
@@ -48,7 +48,12 @@ data_raw = yf.download(tickers, start="2000-01-01", group_by='tickers')
 df_rets = data_raw.xs('Close', axis=1, level=1, drop_level=True)\
             .pct_change()\
             .iloc[3:, :]
-            
+
+# subtracting the index returns from the bank returns                
+df_rets = df_rets\
+            .loc[:banks_index.index[-1],:]\
+            .sub(banks_index.pct_change().loc[df_rets.index[0]:,:], axis='columns', fill_value=0)
+     
 banks_index.columns = ['banks_index']        
 index.columns = ['index']
 
@@ -64,8 +69,24 @@ cor_ts = df_rets\
 cor_ts = pd.DataFrame(cor_ts)
 cor_ts.columns = ['cor']
 
+def eig_connect(x, k):
+    e_vals, _ = eig(x)
+    return sum(e_vals[0:k])/sum(e_vals)
+
+eigen_ts = df_rets\
+    .fillna(0)\
+    .rolling(args.cor_window, min_periods = args.cor_window - 1)\
+    .cov()\
+    .fillna(0)\
+    .groupby(level='Date')\
+    .apply(lambda x: eig_connect(x, 2))
+
+eigen_ts = pd.DataFrame(eigen_ts)
+eigen_ts.columns = ['eig']
+
 df = df_rets\
     .join(cor_ts)\
+    .join(eigen_ts)\
     .join(banks_index)\
     .join(spread)\
     .join(index)\

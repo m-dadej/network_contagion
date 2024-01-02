@@ -15,9 +15,9 @@ using GLM
 # download data
 # args: region us/eu, freq weekly/daily
 run(`python data/stocks_download.py
-    --region us
+    --region eu
     --freq weekly
-    --cor_window 30`)
+    --cor_window 52`)
 
 function remove_outlier(data, m = 3)
     
@@ -31,7 +31,7 @@ end
 
 
 # Load data
-data = CSV.read("data/bank_cor.csv", DataFrame)
+data = CSV.read("data/bank_cor_week.csv", DataFrame)
 
 df_model = Matrix(dropmissing(data[:, ["banks_index", "index", "cor", "spread"]]))
 
@@ -39,49 +39,49 @@ df_model = remove_outlier(df_model, 5)
 
 standard(x) = (x .- mean(x)) ./ std(x)
 
-# df_model[:,1] = standard(sqrt.((df_model[:,1]).^2))
-# df_model[:,2] = standard(df_model[:,2] .- df_model[:,1])
+df_model[:,1] = standard(sqrt.((df_model[:,1]).^2))
+df_model[:,2] = standard(df_model[:,2])
+df_model[:,3] = standard(df_model[:,3])
+df_model[:,4] = standard(df_model[:,4])
+
+exog = [add_lags(df_model[:,1], 1)[:,2] df_model[2:end,2]]
+exog_switch = add_lags(df_model[:,3],1)[:,2] #[df_model[2:end, 3] df_model[2:end,2]]
+
+tvtp = [ones(length(exog[:,1])) df_model[2:end,4]]
+
+# df_model[:,1] = standard(sqrt.(df_model[:,1].^2))
+# df_model[:,2] = standard(sqrt.((df_model[:,2] .- df_model[:,1]).^2))
 # df_model[:,3] = standard(df_model[:,3])
 # df_model[:,4] = standard(df_model[:,4])
 
 # exog = add_lags(df_model[:,1], 1)[:,2]
-# exog_switch = add_lags(df_model[:,3],1)[:,2] #[df_model[2:end, 3] df_model[2:end,2]]
-
-# tvtp = [ones(length(exog[:,1])) df_model[2:end,2]]
-
-df_model[:,1] = standard(sqrt.(df_model[:,1].^2))
-df_model[:,2] = standard(sqrt.(df_model[:,2].^2))
-df_model[:,3] = standard(df_model[:,3])
-df_model[:,4] = standard(df_model[:,4])
-
-exog = [add_lags(df_model[:,1], 1)[:,2] df_model[2:end, 2]]
-exog_switch = add_lags(df_model[:,3],1)[:,2]
-tvtp = [ones(length(exog[:,1])) df_model[2:end,2]]
+# exog_switch = add_lags(df_model[:,4],1)[:,2]
+# tvtp = [ones(length(exog[:,1])) add_lags(df_model[:,3],1)[:,2]]
 
 model = MSModel(df_model[2:end,1], 2, 
                 exog_vars = exog,
                 exog_switching_vars = exog_switch,
                 exog_tvtp = tvtp,
-                random_search_em = 20,
-                random_search = 3
+                random_search_em = 10
                 )
 
 summary_msm(model)
 
-any(isnan.(tvtp))
-cor(df_model[:,1], df_model[:,2])
+plot(sqrt.((df_model[:,1] .- df_model[:,2]).^2))
+plot(sqrt.((df_model[:,1]).^2))
 
+cor(df_model[2:end,1], exog_switch)
 
-ed = expected_duration(model)[expected_duration(model)[:,2] .< 200,:]
+ed = remove_outlier(expected_duration(model), 1)
 plot(ed, label = ["Calm market conditions" "Volatile market conditions"],
          title = "Time-varying expected duration of regimes") 
 
 mean(expected_duration(model), dims = 1)
 
-plot(smoothed_probs(model),
+plot(smoothed_probs(model)[end-500:end,:],
          label     = ["Calm market conditions" "Volatile market conditions"],
          title     = "Regime probabilities", 
-         linewidth = 2,
+         linewidth = 0.5,
          legend = :bottomleft)
 
 df_ols = DataFrame(df_model, :auto)[2:end, :]

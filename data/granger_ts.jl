@@ -26,28 +26,11 @@ function remove_infs(df::Matrix{Float64})
     return df[(1:end) .∉ (infs,),:]
 end
 
-function std_err(X, y, β)
+function std_err(X::Matrix, y::Vector, β::Vector)
     mse = mean((y .- X * β).^2)
     σ² = mse * (X'X)^(-1)
     return sqrt.(diag(σ²))
 end    
-
-function std_err(X::Matrix, y::Vector, β::Vector)
-    residuals = y .- X * β
-    mse = mean(residuals .^ 2)
-    σ² = mse * (X'X) \ I
-    return sqrt.(diag(σ²))
-end
-
-begin @benchmark
-
-X = rand(100, 2)
-y = rand(100)
-β = [1.0, 2.0]
-
-std_err(X, y, β)
-
-end
 
 function preproc_df(df::Matrix{Float64})
     pair = [df[2:end, 1] add_lags(df[:, 1], 1)[:,2] add_lags(df[:, 2], 1)[:,2]]
@@ -56,15 +39,19 @@ function preproc_df(df::Matrix{Float64})
     return pair
 end 
 
+
 function granger_cause(df::Matrix{Float64})
-    
     pair = preproc_df(df)
 
-    β = (pair[:,2:end]'*pair[:,2:end])\pair[:,2:end]'*pair[:,1]
-    Σ = std_err(pair[:,2:end], pair[:,1], β)
+    X = pair[:, 2:end]
+    y = pair[:, 1]
+    
+    β = (X'X) \ X'y
+    Σ = std_err(X, y, β)
     
     return β[2], abs(β[2] / Σ[2]) > 1.96
 end
+
 
 function granger_conect(df::Matrix{Float64})
     granger_mat = zeros(size(df, 2), size(df, 2))
@@ -95,6 +82,11 @@ function granger_conect(df::Matrix{Float64})
 
     return granger_mat
 end
+
+df = rand(300, 40)
+
+begin
+granger_conect(df)
 
 replace_inf(x) = isinf(x) ? 0.0 : x
 

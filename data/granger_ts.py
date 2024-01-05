@@ -7,6 +7,8 @@ from scipy.linalg import lstsq as sp_lstsq
 import timeit
 from scipy.linalg import solve
 
+region = 'eu'
+
 def na_share(df):
     return np.sum(df.isna().sum()) / (df.shape[0])
 
@@ -54,7 +56,6 @@ def granger_mat(df):
     return granger_mat  
 
 fred = Fred(api_key='18c2830f79155831d5c485d84472811f')
-region = 'eu'
 
 if region == 'eu':
     print('region: EU')
@@ -72,7 +73,6 @@ elif region == 'us':
     tickers = "BAC BK BCS BMO COF SCHW C CFG DB GS JPM MTB MS NTRS PNC STT TD TFC UBS WFC ALLY AXP DFS FITB HSBC HBAN KEY MUFG PNC RF SAN"
     banks_index = pd.DataFrame(yf.download("^BKX", start="2000-01-01", group_by='tickers')['Open'])        
     index = pd.DataFrame(yf.download("^SPX", start="2000-01-01", group_by='tickers')['Open'])        
-
 
 data_raw = yf.download(tickers, start="2000-01-01", group_by='tickers')
 
@@ -96,7 +96,11 @@ np.sum(df_rets.iloc[900:1000, [13, 26]] == 0)
 
 df_rets.iloc[900:1000, [15, 28]].dropna()
 
-np.array(df_rets.iloc[900:1000, [15, 28]])
+np.array(df_rets.iloc[476:575, [15,28]])
+
+df_rets.iloc[476:575, [15,28]].dropna()
+
+data[(576 - cor_w + 1):576, [16,29]]
 
 for t in range(cor_w, len(df_rets)):
     print(t/len(df_rets))

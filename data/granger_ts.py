@@ -88,26 +88,16 @@ df_rets = df_rets\
 
 granger = pd.DataFrame({'degree': []})
 
-cor_w = 100
-
 df_rets.to_csv("data/df_rets_granger.csv") 
 
-np.sum(df_rets.iloc[900:1000, [13, 26]] == 0)
 
-df_rets.iloc[900:1000, [15, 28]].dropna()
-
-np.array(df_rets.iloc[476:575, [15,28]])
-
-df_rets.iloc[476:575, [15,28]].dropna()
-
-data[(576 - cor_w + 1):576, [16,29]]
-
-for t in range(cor_w, len(df_rets)):
-    print(t/len(df_rets))
-    window = df_rets.iloc[(t - cor_w):t, :]
-    mat = granger_mat(window)
-    degree = np.nansum(mat) / (mat.shape[0] * mat.shape[1] - mat.shape[0])
-    granger = pd.concat([granger, pd.DataFrame({'degree': [degree]})])
+#cor_w = 100
+# for t in range(cor_w, len(df_rets)):
+#     print(t/len(df_rets))
+#     window = df_rets.iloc[(t - cor_w):t, :]
+#     mat = granger_mat(window)
+#     degree = np.nansum(mat) / (mat.shape[0] * mat.shape[1] - mat.shape[0])
+#     granger = pd.concat([granger, pd.DataFrame({'degree': [degree]})])
 
 
 

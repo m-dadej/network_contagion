@@ -5,7 +5,7 @@ using Statistics
 using Plots
 using GLM
 
-using Pkg; Pkg.add.(["Distributions", "MarSwitching", "DataFrames", "CSV", "Statistics", "Plots", "GLM"])
+#using Pkg; Pkg.add.(["Distributions", "MarSwitching", "DataFrames", "CSV", "Statistics", "Plots", "GLM"])
 # to do:
 # - odjac kurs sp500 od indeksu 
 # - odjąć tez od kursu banków?
@@ -18,8 +18,8 @@ using Pkg; Pkg.add.(["Distributions", "MarSwitching", "DataFrames", "CSV", "Stat
 run(`python data/stocks_download.py
     --region eu
     --freq daily
-    --cor_window 200
-    --eig_k 5`)
+    --cor_window 252
+    --eig_k 3`)
 
 function remove_outlier(data, m = 3)
     
@@ -34,8 +34,11 @@ end
 
 # Load data
 data = CSV.read("data/bank_cor.csv", DataFrame)
+granger_df = CSV.read("data/granger_ts.csv", DataFrame)
 
-df_model = Matrix(dropmissing(data[:, ["banks_index", "index", "eig", "spread"]]))
+data = leftjoin(data, granger_df, on = :Date)
+
+df_model = Matrix(dropmissing(data[:, ["banks_index", "index", "eig", "spread", "granger"]]))
 
 df_model = remove_outlier(df_model, 5)
 
@@ -45,9 +48,10 @@ df_model[:,1] = standard(sqrt.((df_model[:,1]).^2))
 df_model[:,2] = standard(df_model[:,2])
 df_model[:,3] = standard(df_model[:,3])
 df_model[:,4] = standard(df_model[:,4])
+df_model[:,5] = standard(df_model[:,5])
 
 exog = [add_lags(df_model[:,1], 1)[:,2] df_model[2:end,2]]
-exog_switch = add_lags(df_model[:,3],1)[:,2] #[df_model[2:end, 3] df_model[2:end,2]]
+exog_switch = add_lags(df_model[:,6],1)[:,2] #[df_model[2:end, 3] df_model[2:end,2]]
 
 tvtp = [ones(length(exog[:,1])) df_model[2:end,4]]
 

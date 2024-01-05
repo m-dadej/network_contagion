@@ -5,11 +5,12 @@
 @time using MarSwitching
 @time using GLM
 @time using BenchmarkTools
-
+@time using Tables
+@time using Plots
 replace(x, to) = ismissing(x) ? to : x
 
-data = CSV.read("data/df_rets_granger.csv", DataFrame)[:, 2:end]
-data = Matrix(replace.(data, Inf))
+data_raw = CSV.read("data/df_rets_granger.csv", DataFrame)
+data = Matrix(replace.(data_raw[:, 2:end], Inf))
 
 
 function na_share(df::Matrix{Float64})
@@ -52,29 +53,31 @@ function granger_cause(df::Matrix{Float64})
     return β[2], abs(β[2] / Σ[2]) > 1.96
 end
 
-
 function granger_conect(df::Matrix{Float64})
     granger_mat = zeros(size(df, 2), size(df, 2))
 
     for i in 1:size(df, 2)
         for j in 1:size(df, 2)
+
+            pair = df[:, [i, j]]
+            
             if i == j
                 granger_mat[i, j] = 0
                 continue
             end
 
-            if any(na_share(df[:, [i, j]]) .>= 0.9)
+            if any(na_share(pair) .>= 0.9)
                 granger_mat[i, j] = Inf
                 continue
             end
 
-            if rank(preproc_df(df[:, [i, j]])) != 4
+            if rank(preproc_df(pair)) != 4
                 granger_mat[i, j] = Inf
                 continue
             end
             
             #println(i, " ", j)
-            _, signif = granger_cause(df[:, [i, j]])
+            _, signif = granger_cause(pair)
 
             granger_mat[i, j] = signif ? 1 : 0
         end
@@ -82,11 +85,6 @@ function granger_conect(df::Matrix{Float64})
 
     return granger_mat
 end
-
-df = rand(300, 40)
-
-begin
-granger_conect(df)
 
 replace_inf(x) = isinf(x) ? 0.0 : x
 
@@ -105,46 +103,9 @@ for t in cor_w:size(data)[1]
     granger_ts[t - cor_w + 1] = granger_degree(mat)
 end
 
-na_share(data[(585 - cor_w + 1):585, [16,29]])
+data
+data_raw
 
-rank(remove_infs(data[(576 - cor_w + 1):576, [16,29]]))
+granger_out = DataFrame(Date = data_raw.Date[cor_w:end], granger = granger_ts)
 
-df = data[(576 - cor_w + 1):576, :]
-
-rank(preproc_df(data[(576 - cor_w + 1):576, [16, 29]]))
-
-rank(rand(20, 2))
-
-rank(remove_infs(df[:, [i, j]])) < 2
-
-pair = [df[2:end, 1] add_lags(df[:, 1], 1)[:,2] add_lags(df[:, 2], 1)[:,2]]
-pair = remove_infs(pair)
-pair = [pair ones(size(pair, 1))]
-
-df[(t - cor_w + 1):t, [16, 29]]
-window[:, [16, 29]]
-
-df = data[(t - cor_w + 1):t, :]
-df = window
-granger_cause(df[:, [15, 28]])
-window
-granger_conect(df[(t - cor_w + 1):t, :])
-window[:, [16, 29]]
-
-
-
-df_t = df[:, [15, 28]]
-
-remove_infs(df[:, [15, 28]])
-
-pair = [df_t[2:end, 1] add_lags(df_t[:, 1], 1)[:,2] add_lags(df_t[:, 2], 1)[:,2]]
-pair = remove_infs(pair)
-pair = [pair ones(size(pair, 1))]
-
-β = (pair[:,2:end]'*pair[:,2:end])\pair[:,2:end]'*pair[:,1]
-Σ = std_err(pair[:,2:end], pair[:,1], β)
-
-return β[2], abs(β[2] / Σ[2]) > 1.96
-
-
-    
+CSV.write("data/granger_ts.csv", granger_out)

@@ -1,13 +1,19 @@
 import pandas as pd
 import numpy as np
-import statsmodels.api as sm
 import yfinance as yf
 from fredapi import Fred
-from scipy.linalg import lstsq as sp_lstsq
-import timeit
-from scipy.linalg import solve
+from scipy.linalg import lstsq
+import argparse
+import datetime as dt
 
-region = 'eu'
+# Create the parser
+parser = argparse.ArgumentParser(description="Download stocks data fro granger matrix")
+
+parser.add_argument('--region', type=str, required=True)
+parser.add_argument('--freq', type=str, required=True)
+
+# Parse the arguments
+args = parser.parse_args()
 
 def na_share(df):
     return np.sum(df.isna().sum()) / (df.shape[0])
@@ -57,7 +63,7 @@ def granger_mat(df):
 
 fred = Fred(api_key='18c2830f79155831d5c485d84472811f')
 
-if region == 'eu':
+if args.region == 'eu':
     print('region: EU')
     spread = fred.get_series('BAMLHE00EHYIOAS') # euro
     tickers = "EBO.DE RAW.DE KBC.BR CBK.DE DBK.DE NDA-SE.ST DANSKE.CO JYSK.CO SYDB.CO BBVA BKT.MC CABK.MC SAB.MC SAN.MC UNI.MC BNP.PA ACA.PA GLE.PA ALPHA.AT EUROB.AT ETE.AT TPEIR.AT OTP.BD A5G.IR BARC.L BIRG.IR BAMI.MI ISP.MI MB.MI BMPS.MI BPE.MI UCG.MI ABN.AS INGA.AS DNB.OL PKO.WA PEO.WA BCP.LS SEB-A.ST SHB-A.ST SWED-A.ST"
@@ -67,12 +73,12 @@ if region == 'eu':
                     
     index = pd.DataFrame(yf.download("^STOXX", start="2000-01-01", group_by='tickers')['Open'])        
                     
-elif region == 'us':
-    print('region: US')
-    spread = fred.get_series('BAMLC0A0CM') # usa
-    tickers = "BAC BK BCS BMO COF SCHW C CFG DB GS JPM MTB MS NTRS PNC STT TD TFC UBS WFC ALLY AXP DFS FITB HSBC HBAN KEY MUFG PNC RF SAN"
-    banks_index = pd.DataFrame(yf.download("^BKX", start="2000-01-01", group_by='tickers')['Open'])        
-    index = pd.DataFrame(yf.download("^SPX", start="2000-01-01", group_by='tickers')['Open'])        
+elif args.region == 'us':
+     print('region: US')
+     spread = fred.get_series('BAMLC0A0CM') # usa
+     tickers = "BAC BK BCS BMO COF SCHW C CFG DB GS JPM MTB MS NTRS PNC STT TD TFC UBS WFC ALLY AXP DFS FITB HSBC HBAN KEY MUFG PNC RF SAN"
+     banks_index = pd.DataFrame(yf.download("^BKX", start="2000-01-01", group_by='tickers')['Open'])        
+     index = pd.DataFrame(yf.download("^SPX", start="2000-01-01", group_by='tickers')['Open'])        
 
 data_raw = yf.download(tickers, start="2000-01-01", group_by='tickers')
 
@@ -85,12 +91,20 @@ df_rets = df_rets\
             .loc[:banks_index.index[-1],:]\
             .sub(banks_index.pct_change().loc[df_rets.index[0]:,:], axis='columns', fill_value=0)\
             .iloc[:,0:-1]
+            
+if args.freq == 'weekly':       
+    print("freq: weekly") 
+    first_days = df_rets\
+                .reset_index()['Date']\
+                .dt.to_period('W')\
+                .dt.to_timestamp()\
+                .unique()   
 
-granger = pd.DataFrame({'degree': []})
+    df_rets = df_rets.query('Date in @first_days')            
 
 df_rets.to_csv("data/df_rets_granger.csv") 
 
-
+#granger = pd.DataFrame({'degree': []})
 #cor_w = 100
 # for t in range(cor_w, len(df_rets)):
 #     print(t/len(df_rets))

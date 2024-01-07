@@ -1,14 +1,9 @@
 \begin{thebibliography}{}
 
-\bibitem[Aldasoro et~al., 2017]{aldasoro}
-Aldasoro, I., Gatti, D.~D., and Faia, E. (2017).
-\newblock Bank networks: Contagion, systemic risk and prudential policy.
-\newblock {\em Journal of Economic Behavior \& Organization}, 142:164--188.
-
-\bibitem[Bluhm and Krahnen, 2014]{bluhm}
-Bluhm, M. and Krahnen, J.~P. (2014).
-\newblock Systemic risk in an interconnected banking system with endogenous
-  asset markets.
-\newblock {\em Journal of Financial Stability}, 13:75--94.
+\bibitem[Billio et~al., 2012]{billio}
+Billio, M., Getmansky, M., Lo, A.~W., and Pelizzon, L. (2012).
+\newblock Econometric measures of connectedness and systemic risk in the
+  finance and insurance sectors.
+\newblock {\em Journal of Financial Economics}, 104:535--559.
 
 \end{thebibliography}

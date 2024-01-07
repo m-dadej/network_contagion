@@ -22,17 +22,16 @@ e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.
 bs = CSV.read("data/eba_stresstest2015.csv", DataFrame, header = 0, decimal = ',')
 bs = sort(bs ./ 1_000_000, rev = true)
 
-d = bs[1:5:50, 2]
-e = bs[1:5:50, 1]
+d = bs[:, 2]
+e = bs[:, 1]#bs[1:5:50, 1]
 
-
-n_sim = 100
-σ_ss_params = -collect(0:1:6.0)
+n_sim = 10
+σ_ss_params = [-3.8,-4.0]#-collect(0:0.1:6.0)
 σ_params = [4.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
 
-results = CSV.read("data/results_10banks.csv", DataFrame)
+results = CSV.read("data/results_done.csv", DataFrame)
 
 results = DataFrame(σ             = Float64[],
                     σ_ss          = Float64[],
@@ -50,7 +49,7 @@ for σ_ss in σ_ss_params
     for σ in σ_params
         for sim in 1:n_sim
             seed = rand(1:10000000000)
-            Random.seed!(seed)
+            #Random.seed!(seed)
             println("seed: $seed | sim: $sim / $n_sim | σ: $σ / $(σ_params[end]) | σ_ss: $σ_ss / $(σ_ss_params[end])")
             
             bank_sys = BankSystem(α = 0.01,
@@ -91,10 +90,10 @@ for σ_ss in σ_ss_params
             println("max BS diff: ", maximum(balance_check(bank_sys)), " | imbalance: $(round(get_market_balance(bank_sys)))")
             adjust_imbalance!(bank_sys)
             try
-                fund_matching!(bank_sys, 0.3)    
+                fund_matching!(bank_sys, 0.1)    
             catch
                 try
-                    fund_matching!(bank_sys, 0.5)  
+                    fund_matching!(bank_sys, 0.3)  
                 catch
                     @warn "NO fund_matching solution!"
                     continue
@@ -135,7 +134,6 @@ for σ_ss in σ_ss_params
 end
 
 
-
 plot_df = @chain results begin
     #transform(:σ_ss => x -> round.(x), renamecols = false)
     groupby([:σ_ss])
@@ -144,6 +142,8 @@ plot_df = @chain results begin
     sort()
     #unstack(:σ, :n_default_mean)
 end
+
+plot_df[10:30,:]
 
 plot(plot_df[:,1], plot_df[:,2])
 
@@ -163,7 +163,7 @@ end
 
 results.eq_r_l
 
-CSV.write("data/results_10banks.csv", results)
+CSV.write("data/results_done.csv", results)
 
 quantile(results.n_default, [0.5, 0.75, 0.8, 0.9, 0.95, 0.99, 1.0])
 
@@ -200,8 +200,8 @@ end
 
 @chain results begin
     groupby([:σ_ss])
-    combine(:n_default => x -> sum(x .> 10)/sum(x .> 0))
-    #combine(nrow => :count)
+    #combine(:n_default => x -> sum(x .> 10)/sum(x .> 0))
+    combine(nrow => :count)
     sort()
     #unstack(:σ, :n_default_function)
 end    

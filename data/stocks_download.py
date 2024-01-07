@@ -7,7 +7,7 @@ from fredapi import Fred
 from typing import Dict
 import argparse
 from numpy.linalg import eig
-
+from sklearn.covariance import LedoitWolf
 
 # Create the parser
 parser = argparse.ArgumentParser(description="Download stocks data.")

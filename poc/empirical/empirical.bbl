@@ -1,0 +1,31 @@
+\begin{thebibliography}{}
+
+\bibitem[Acemoglu et~al., 2015]{acemoglu}
+Acemoglu, D., Ozdaglar, A., and Tahbaz-Salehi, A. (2015).
+\newblock Systemic risk and stability in financial networks.
+\newblock {\em American Economic Review}, 105(2):564--608.
+
+\bibitem[Billio et~al., 2012]{billio}
+Billio, M., Getmansky, M., Lo, A.~W., and Pelizzon, L. (2012).
+\newblock Econometric measures of connectedness and systemic risk in the
+  finance and insurance sectors.
+\newblock {\em Journal of Financial Economics}, 104:535--559.
+
+\bibitem[Callaway et~al., 2006]{callaway}
+Callaway, D.~S., Newman, M., Strogatz, S.~H., and Watts, D.~J. (2006).
+\newblock {\em Network Robustness and Fragility: Percolation on Random Graphs},
+  pages 510--513.
+\newblock Princeton University Press, Princeton.
+
+\bibitem[Gai and Kapadia, 2010]{gai}
+Gai, P. and Kapadia, S. (2010).
+\newblock Contagion in financial networks.
+\newblock {\em Proceedings of the Royal Society A: Mathematical, Physical and
+  Engineering Sciences}, 466(2120):2401--2423.
+
+\bibitem[Haldane, 2009]{haldane}
+Haldane, A.~G. (2009).
+\newblock Rethinking the financial network.
+\newblock Speech delivered at the Financial Student Association, Amsterdam.
+
+\end{thebibliography}

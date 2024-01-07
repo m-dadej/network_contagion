@@ -44,9 +44,9 @@ df_model = remove_outlier(df_model, 5)
 standard(x) = (x .- mean(x)) ./ std(x)
 
 df_model[:,1] = standard(sqrt.((df_model[:,1]).^2))
-df_model[:,2] = standard(df_model[:,2])
-df_model[:,3] = standard(df_model[:,3])
-df_model[:,4] = standard(df_model[:,4])
+# df_model[:,2] = standard(df_model[:,2])
+# df_model[:,3] = standard(df_model[:,3])
+# df_model[:,4] = standard(df_model[:,4])
 
 exog = [add_lags(df_model[:,1], 1)[:,2] df_model[2:end,2]]
 exog_switch = add_lags(df_model[:,4],1)[:,2] #[df_model[2:end, 3] df_model[2:end,2]]
@@ -62,7 +62,7 @@ tvtp = [ones(length(exog[:,1])) add_lags(df_model[:,3], 1)[:,2]]
 # exog_switch = add_lags(df_model[:,4],1)[:,2]
 # tvtp = [ones(length(exog[:,1])) add_lags(df_model[:,3],1)[:,2]]
 
-model = MSModel(df_model[2:end,1], 2, 
+model = MSModel(df_model[2:end,1] .- mean(df_model[2:end,1]), 2, 
                 exog_vars = exog,
                 exog_switching_vars = exog_switch,
                 exog_tvtp = tvtp,

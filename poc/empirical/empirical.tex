@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\hypersetup{
+colorlinks=false,
+pdfborder={0 0 0},
+}
+\title{Systemic risk and financial connectedness: empirical evidence}
+\bibliographystyle{apalike}
+\author{Mateusz Dadej}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\subsection*{Introduction}
+
+One of the main contributions of literature on financial networks is the property of financial system called robust-yet-fragile. The term was first coined by chief economist of Bank of England, Andrew Haldane (\citet{haldane}). He posits that financial connections can serve at
+the same time as shock-absorbers and shock-amplifiers to the financial sector. This makes the system robust, when the magnitude of shock is relatively small, but fragile, when the shock is large. 
+
+A seminal paper by \citet{acemoglu}, provides a formal model, in which an extent of financial contagion exhibits a form of regime transition. When the shocks are small, the damages are dissipated through large number of financial institutions. On the other hand, when the shock is above some threshold, the properties of the system changes markedly. The damages are no longer dissipated, but amplified through the network. This makes the effect of connectedness on the system regime-dependent. Similar works that provide a theoretical mechanisms this property are \citet{callaway} and \citet{gai}
+
+This research aims at providing empirical evidence for the regime-dependent effect of connectedness on financial stability. 
+
+\subsection*{Research design}
+
+The research design is a two step process. Using stock prices data of the biggest banks from eurozone and US, various statistical measures of system connectedness are estimated. The measures are calculated on a rolling basis, providing the time series of connectedness. 
+
+In the second step, in order to assess the regime-dependent effect of connectedness on financial stability, the time series of connectedness is used as an explanatory variable in a Markov switching GARCH model.
+
+\subsection*{Measures of financial connectedness}
+
+Because of lack of transaction-level data among banks, the econometric literature provides several methods that aim at estimating a level of connectedness of financial sector. The measures are all estimated based on stock prices data, therefore providing a relatively high frequency variables. 
+
+1. Average correlation 
+
+\[\bar{\rho}(R) = \frac{\sum_{i \neq i}^{N} \sum_{j \neq j}^{N} \rho_{i,j}(R)}{N^2-N}\]
+
+Where $\rho_{i,j}(R)$ is a correlation matrix of banks rate of returns.
+
+2. 
+
+
+Where the last two of them are as described in \citet{billio}
+
+\subsection*{}
+
+\bibliography{sample}
+
+
+\end{document}

@@ -8,6 +8,7 @@ from typing import Dict
 import argparse
 from numpy.linalg import eig
 from sklearn.covariance import LedoitWolf
+import warnings
 
 # Create the parser
 parser = argparse.ArgumentParser(description="Download stocks data.")
@@ -16,6 +17,8 @@ parser.add_argument('--region', type=str, required=True)
 parser.add_argument('--freq', type=str, required=True)
 parser.add_argument('--cor_window', type=int, required=True)
 parser.add_argument('--eig_k', type=int, required=True)
+parser.add_argument('--excess', type=bool, required=True)
+
 
 # Parse the arguments
 args = parser.parse_args()
@@ -47,14 +50,15 @@ data_raw = yf.download(tickers, start="2000-01-01", group_by='tickers')
 
 df_rets = data_raw.xs('Close', axis=1, level=1, drop_level=True)\
             .pct_change()\
-            .iloc[3:, :]
+            .iloc[3:, :]\
+            .loc[:banks_index.index[-1],:]
 
-# subtracting the index returns from the bank returns                
-df_rets = df_rets\
-            .loc[:banks_index.index[-1],:]\
+# subtracting the index returns from the bank returns    
+if args.excess:            
+    df_rets = df_rets\
             .sub(banks_index.pct_change().loc[df_rets.index[0]:,:], axis='columns', fill_value=0)\
             .iloc[:,0:-1]
-     
+  
 banks_index.columns = ['banks_index']        
 index.columns = ['index']
 
@@ -66,9 +70,28 @@ cor_ts = df_rets\
     .groupby(level='Date')\
     .mean()\
     .apply(lambda x: x.mean(), axis=1)
-
+    
 cor_ts = pd.DataFrame(cor_ts)
-cor_ts.columns = ['cor']
+cor_ts.columns = ['cor']    
+
+def lw_shrink(x):
+    cov = LedoitWolf().fit(x).covariance_
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        Dinv = np.diag(1 / np.sqrt(np.diag(cov))) 
+        corr = Dinv @ cov @ Dinv  
+    return np.mean(np.abs(corr))      
+    
+lw_cov = df_rets\
+    .fillna(0)\
+    .rolling(args.cor_window, min_periods = args.cor_window - 1)\
+    .cov()\
+    .fillna(0)\
+    .groupby(level='Date')\
+    .apply(lambda x: lw_shrink(x))    
+     
+lw_cov = pd.DataFrame(lw_cov)
+lw_cov.columns = ['cor_lw']
 
 def eig_connect(x, k):
     e_vals, _ = eig(x)
@@ -87,6 +110,7 @@ eigen_ts.columns = ['eig']
 
 df = df_rets\
     .join(cor_ts)\
+    .join(lw_cov)\
     .join(eigen_ts)\
     .join(banks_index)\
     .join(spread)\

@@ -15,9 +15,10 @@ using GLM
 # args: region us/eu, freq weekly/daily
 run(`python data/stocks_download.py
     --region eu
-    --freq daily
-    --cor_window 30
-    --eig_k 3`)
+    --freq weekly
+    --cor_window 100
+    --eig_k 2
+    --excess True`)
 
 function remove_outlier(data, m = 3)
     
@@ -32,11 +33,11 @@ end
 
 # Load data
 data = CSV.read("data/bank_cor.csv", DataFrame)
-granger_df = CSV.read("data/granger_ts.csv", DataFrame)
+# granger_df = CSV.read("data/granger_ts.csv", DataFrame)
 
-data = leftjoin(data, granger_df, on = :Date)
+# data = leftjoin(data, granger_df, on = :Date)
 
-df_model = Matrix(dropmissing(data[:, ["banks_index", "index", "spread", "granger"]]))
+df_model = Matrix(dropmissing(data[:, ["banks_index", "index", "spread", "cor_lw"]]))
 
 df_model = remove_outlier(df_model, 5)
 
@@ -50,7 +51,7 @@ df_model[:,4] = standard(df_model[:,4])
 exog = [add_lags(df_model[:,1], 1)[:,2] df_model[2:end,2]]
 exog_switch = add_lags(df_model[:,4],1)[:,2] #[df_model[2:end, 3] df_model[2:end,2]]
 
-tvtp = [ones(length(exog[:,1])) df_model[2:end,3]]
+tvtp = [ones(length(exog[:,1])) add_lags(df_model[:,3], 1)[:,2]]
 
 # df_model[:,1] = standard(sqrt.(df_model[:,1].^2))
 # df_model[:,2] = standard(sqrt.((df_model[:,2] .- df_model[:,1]).^2))
@@ -72,7 +73,7 @@ summary_msm(model)
 
 plot(sqrt.((df_model[:,1] .- df_model[:,2]).^2))
 plot(sqrt.((df_model[:,1]).^2))
-plot(data.cor)
+plot(data.cor_lw)
 
 cor(Matrix(dropmissing(data[:, ["cor", "eig"]])))
 

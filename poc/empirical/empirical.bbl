@@ -23,9 +23,20 @@ Gai, P. and Kapadia, S. (2010).
 \newblock {\em Proceedings of the Royal Society A: Mathematical, Physical and
   Engineering Sciences}, 466(2120):2401--2423.
 
+\bibitem[Granger, 1969]{granger}
+Granger, C. W.~J. (1969).
+\newblock Investigating causal relations by econometric models and
+  cross-spectral methods.
+\newblock {\em Econometrica}, 37(3):424--438.
+
 \bibitem[Haldane, 2009]{haldane}
 Haldane, A.~G. (2009).
 \newblock Rethinking the financial network.
 \newblock Speech delivered at the Financial Student Association, Amsterdam.
+
+\bibitem[Ledoit and Wolf, 2003]{ledoit}
+Ledoit, O. and Wolf, M. (2003).
+\newblock Honey, i shrunk the sample covariance matrix.
+\newblock {\em UPF economics and business working paper}, (691).
 
 \end{thebibliography}

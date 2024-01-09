@@ -571,6 +571,9 @@ INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT c:/texlive/2022/texmf-var/fonts/map/pdftex/updmap/pdftex.map
 INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
+INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
+INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmbx7.tfm
+INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmbx5.tfm
 INPUT ./empirical.bbl
 INPUT empirical.bbl
 INPUT ./empirical.bbl
@@ -581,6 +584,7 @@ INPUT c:/texlive/2022/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
 INPUT empirical.aux
 INPUT ./empirical.out
 INPUT ./empirical.out
+INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
 INPUT c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb

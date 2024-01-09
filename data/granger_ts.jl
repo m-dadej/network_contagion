@@ -8,7 +8,7 @@
 @time using Tables
 @time using Plots
 
-cor_w = 30
+cor_w = 63
 
 run(`python data/granger_ts.py
     --region eu

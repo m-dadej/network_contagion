@@ -31,24 +31,71 @@ This research aims at providing empirical evidence for the regime-dependent effe
 
 The research design is a two step process. Using stock prices data of the biggest banks from eurozone and US, various statistical measures of system connectedness are estimated. The measures are calculated on a rolling basis, providing the time series of connectedness. 
 
-In the second step, in order to assess the regime-dependent effect of connectedness on financial stability, the time series of connectedness is used as an explanatory variable in a Markov switching GARCH model.
+In the second step, in order to assess the regime-dependent effect of connectedness on financial stability, the time series of connectedness is used as an explanatory variable in a Markov switching ARCH model.
 
 \subsection*{Measures of financial connectedness}
 
 Because of lack of transaction-level data among banks, the econometric literature provides several methods that aim at estimating a level of connectedness of financial sector. The measures are all estimated based on stock prices data, therefore providing a relatively high frequency variables. 
 
+\
+
 1. Average correlation 
 
 \[\bar{\rho}(R) = \frac{\sum_{i \neq i}^{N} \sum_{j \neq j}^{N} \rho_{i,j}(R)}{N^2-N}\]
 
-Where $\rho_{i,j}(R)$ is a correlation matrix of banks rate of returns.
-
-2. 
+Where $\rho_{i,j}(R)$ is a correlation matrix of rate of returns, estimated with a Ledoit-Wolf estimator \citet{ledoit}. This estimator is shown to have smaller estimation error than sample covariance when the number of observations is relatively small. This is the case for the research design, where the measures of financial connectedness are estimated on a rolling basis.
 
 
-Where the last two of them are as described in \citet{billio}
+2. Covariance eigenvalue 
 
-\subsection*{}
+Given the sample covariance matrix of rates of returns $\Sigma$, the covariance eigenvalues $\lambda$ are obtained solving the below equation:
+
+\[|\bf{A} - \lambda \bf{I}| = 0\]
+
+The eigenvalues based measure of connectedness is then defined as:
+
+\[\frac{\sum_{i}^{k}}{\sum_{i}^{N}}\]
+
+This measure captures the proportion of variance of the system that is explained by the first $k$ eigenvalues, as in principal component analysis. The higher the proportion, the more connected the system is.
+
+3. Granger causality network degree
+
+The measure is based on the Granger defined causality \citet{granger}. In which a time-series variable $x_t$ "granger" cause variable $y_t$, when it contains enough information at time $t$ to predict value of $y_{t+1}$. 
+
+Specifically, the granger causality is investigated with following regression:
+
+\[r_{i,t+1} = \beta_0 + \beta_1 r_{m, t} + \beta_2 r_{j, t}\]
+
+Where $r_{j, t}$ is a rate of return of bank $j$ at time $t$, which allegedly granger causes the rate of return of bank $i$. The regression also controls for the market rate of return $r_{m, t}$, which is a proxy for the systematic risk.
+
+The banks $j$ and $i$ are said to be connected when the coefficient $\beta_2$ is statistically significant. 
+
+Given the procedure above we can define an adjacency matrix $G$ describing the relationship between the bansk:
+
+\[G_{i,j} = \begin{cases}
+    1  & \text{if } j \text{granger cause } i \\
+    0 & \text{otherwise}
+  \end{cases} \forall i \neq j\]
+
+Then the measure of granger connectedness is defined as:
+
+\[\frac{\sum_{i \neq j}^{N} \sum_{j \neq i}^{N} G_{i,j}}{ N \times (N-1)}\]
+
+The last two of the above connectedness measures are as described in \citet{billio}.
+
+
+\subsection*{Modeling the regime-dependent effect of connectedness}
+
+As the theory suggests, the effect of connectedness on financial stability is regime-dependent. In order to capture this property, a Markov switching ARCH model is used to describe the time-varying volatility of banking sector. The proxy of the banking sector being the apropriate banking index (eurozone or US banking sector index, S\&P or STOXXX).
+
+The mean specification of the model controls for the first order autocorrelation of the broad market rate of returns (S\&P 500 or STOXX600) and an autoregressive component:
+
+\[\mu_i,t = \beta_0 + \beta_1 r_{b,t-1} + \beta_1 r_{m,t-1} + \epsilon_t\]
+
+Where $r_{b,t}$ is the rate of return of the banking sector index and $r_{m,t}$ is the rate of return of the broad market index. The Markov-switching ARCH specification is then:
+
+\[\sigma^2_t = \alpha_{0,s} + \alpha_{1} \epsilon^2_{t-1} + \alpha_{2,s} \kappa_{t-1}\]
+
 
 \bibliography{sample}
 

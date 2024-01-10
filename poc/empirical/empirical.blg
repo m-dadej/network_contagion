@@ -3,46 +3,50 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: empirical.aux
 The style file: apalike.bst
 Database file #1: sample.bib
+Warning--to sort, need author or key in eba
+Warning--to sort, need author or key in fed
+Warning--empty author in eba
+Warning--empty author in fed
 Warning--there's a number but no volume in ledoit
-You've used 7 entries,
+You've used 9 entries,
             1935 wiz_defined-function locations,
-            522 strings with 4901 characters,
-and the built_in function-call counts, 2797 in all, are:
-= -- 278
+            529 strings with 5049 characters,
+and the built_in function-call counts, 3241 in all, are:
+= -- 322
 > -- 104
 < -- 5
 + -- 34
 - -- 34
-* -- 237
-:= -- 486
-add.period$ -- 21
-call.type$ -- 7
-change.case$ -- 51
-chr.to.int$ -- 7
-cite$ -- 8
-duplicate$ -- 103
-empty$ -- 197
+* -- 275
+:= -- 558
+add.period$ -- 27
+call.type$ -- 9
+change.case$ -- 63
+chr.to.int$ -- 9
+cite$ -- 16
+duplicate$ -- 125
+empty$ -- 239
 format.name$ -- 45
-if$ -- 550
+if$ -- 636
 int.to.chr$ -- 1
 int.to.str$ -- 0
 missing$ -- 7
-newline$ -- 38
+newline$ -- 48
 num.names$ -- 21
-pop$ -- 41
+pop$ -- 51
 preamble$ -- 1
-purify$ -- 52
+purify$ -- 62
 quote$ -- 0
-skip$ -- 82
+skip$ -- 96
 stack$ -- 0
-substring$ -- 214
+substring$ -- 240
 swap$ -- 15
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 40
-warning$ -- 1
+type$ -- 52
+warning$ -- 5
 while$ -- 23
 width$ -- 0
-write$ -- 93
-(There was 1 warning)
+write$ -- 117
+(There were 5 warnings)

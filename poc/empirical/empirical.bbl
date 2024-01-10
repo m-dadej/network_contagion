@@ -1,5 +1,15 @@
 \begin{thebibliography}{}
 
+\bibitem[eba, 2023]{eba}
+ (2023).
+\newblock 2023 eu-wide stress test.
+\newblock Technical report, European Banking Authority.
+
+\bibitem[fed, 2023]{fed}
+ (2023).
+\newblock 2023 federal reserve stress test results.
+\newblock Technical report, Board of Governors of the Federal Reserve System.
+
 \bibitem[Acemoglu et~al., 2015]{acemoglu}
 Acemoglu, D., Ozdaglar, A., and Tahbaz-Salehi, A. (2015).
 \newblock Systemic risk and stability in financial networks.

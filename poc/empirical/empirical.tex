@@ -5,6 +5,12 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{booktabs,siunitx}
+\sisetup{%
+  output-decimal-marker={,},
+}
 \hypersetup{
 colorlinks=false,
 pdfborder={0 0 0},
@@ -90,11 +96,129 @@ As the theory suggests, the effect of connectedness on financial stability is re
 
 The mean specification of the model controls for the first order autocorrelation of the broad market rate of returns (S\&P 500 or STOXX600) and an autoregressive component:
 
-\[\mu_i,t = \beta_0 + \beta_1 r_{b,t-1} + \beta_1 r_{m,t-1} + \epsilon_t\]
+\[\mu_{i,t} = \beta_0 + \beta_1 r_{b,t-1} + \beta_1 r_{m,t-1} + \underbrace{\sigma_t z_t}_{=\epsilon_t}\]
 
 Where $r_{b,t}$ is the rate of return of the banking sector index and $r_{m,t}$ is the rate of return of the broad market index. The Markov-switching ARCH specification is then:
 
-\[\sigma^2_t = \alpha_{0,s} + \alpha_{1} \epsilon^2_{t-1} + \alpha_{2,s} \kappa_{t-1}\]
+\[\sqrt{\sigma^2_t} = \alpha_{0,s} + \alpha_{1,s} \kappa_{t-1} + \sum_{i=1}^{p} \alpha_{i+1} \sqrt{\epsilon^2_{t-i}}\]
+
+With $z_t \sim \text{i.i.d.} \mathcal{N}(0, \eta_s)$. The $p$ is the number of lags of the ARCH effect (The models are estimated with $p = 4$).
+
+A well documented phenomena is the increase of the correlation across assets during the financial distress. This is mostly because of the fly to safety effect and search for liquidity. In order to avoid this endogeneity, the connectedness measures are lagged by one period, thus providing a causal effect on the volatility of banking sector.
+
+The model parameters indexed with $s$ are regime-dependent. Differentiating the effect of connectedness on the banking volatility for different market conditions. The regime is described by the Markov process $s_t$ with transition probabilities $\pi_{ij}$:
+
+\begin{equation*}
+  P(S_t = i | S_{t-1} = j) = \begin{bmatrix}
+    \pi_1 & 1 - \pi_2\\
+      1 - \pi_1 & \pi_2
+      \end{bmatrix}
+\end{equation*}
+
+\subsection*{Data and preporcessing}
+
+The data used in the research is the daily stock prices of the banks from two regions - US and Europe. The banks from the sample needs to take part in the EBA stress tests (\citet{eba}) or Fed stress tests (\citet{fed}) and be publicly traded. The total amount of the banks in the sample is 41 for EU and 30 for US. S\%P and STOXX600 are used for the broad market index and their relative industry specific indices. The data is from 2000 to 2023.
+
+The connectedness measures are standardized to have mean 0 and standard deviation 1. The final time series for EU are presented in figure 1. The absolute returns of stocks and indices are multiplied by 100. The eigenvalue based measure is calculated based on a single highest eigenvalue. 
+
+\begin{figure}[t]
+  \caption{Time series of connectedness measures for a rolling window of 63 trading days (quarter)}
+  \includegraphics[scale=0.5]{connectmeasures.png}
+  \centering
+\end{figure}
+
+\subsection*{Results}
+
+The results are presented below. Parameters of the mean specifications ($\beta$) and parameters of ARCH effects ($\alpha_{2,\cdots,p}$) are omitted for the sake of brevity. The $\pi_{i,i}$ are diagonal elements of the transition matrix.
+
+\
+
+\begin{table}
+\caption{Models for EU banking sector and rolling window of 63 trading days (quarter)}
+\begin{tabular}{cccccc}
+  \toprule
+   Connectedness measure &  & \multicolumn{2}{c}{\bfseries Regime 1} & \multicolumn{2}{c}{\bfseries Regime 2}  \\
+   %\cmidrule(lr){1-6}
+   \hline
+   & & Estimate & S.E. & Estimate & S.E. \\
+   \hline
+   \multirow{3}{*}[\normalbaselineskip]{Correlation-based} & $\alpha_0$ & 0.456* & 0.019 & 1.947*  & 0.059 \\
+    & $\alpha_1$ & 0.006 & 0.01 & 0.239* & 0.04 \\
+    & $\eta$ & 0.429 & 0.009 & 1.384 & 0.012 \\
+    & $\pi_{i,i}$ &  \multicolumn{2}{c}{77.2\%} & \multicolumn{2}{c}{50.6\%}\\
+    \hline
+    \multirow{3}{*}[\normalbaselineskip]{Eigenvalue-based} & $\alpha_0$ & 0.469* & 0.019 & 1.919*  & 0.056 \\
+    & $\alpha_1$ & 0.023* & 0.009 & 0.338* & 0.047 \\
+    & $\eta$ & 0.425 & 0.009 & 1.374 & 0.012 \\
+    & $\pi_{i,i}$ &  \multicolumn{2}{c}{76.6\%} & \multicolumn{2}{c}{50.5\%}\\
+    \hline
+    \multirow{3}{*}[\normalbaselineskip]{Granger-based} & $\alpha_0$ & 0.463* & 0.018 & 1.953  & 0.057 \\
+    & $\alpha_1$ & 0.017 & 0.01 & 0.195* & 0.04 \\
+    & $\eta$ & 0.426 & 0.009 & 1.377 & 0.012 \\
+    & $\pi_{i,i}$ &  \multicolumn{2}{c}{78.1\%} & \multicolumn{2}{c}{52.9\%}\\
+    \hline
+  \multicolumn{6}{l}{\footnotesize * coefficient with 5\% statistical significance} \\
+  \hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+  \caption{Models for US banking sector and rolling window of 63 trading days (quarter)}
+  \begin{tabular}{cccccc}
+    \toprule
+     Connectedness measure &  & \multicolumn{2}{c}{\bfseries Regime 1} & \multicolumn{2}{c}{\bfseries Regime 2}  \\
+     %\cmidrule(lr){1-6}
+     \hline
+     & & Estimate & S.E. & Estimate & S.E. \\
+     \hline
+     \multirow{3}{*}[\normalbaselineskip]{Correlation-based} & $\alpha_0$ & 0.402* & 0.013 & 1.517*  & 0.054 \\
+      & $\alpha_1$ & 0.027* & 0.007 & 0.239* & 0.044 \\
+      & $\eta$ & 0.373 & 0.007 & 1.268 & 0.017 \\
+      & $\pi_{i,i}$ &  \multicolumn{2}{c}{89.4\%} & \multicolumn{2}{c}{67\%}\\
+      \hline
+      \multirow{3}{*}[\normalbaselineskip]{Eigenvalue-based} & $\alpha_0$ & 0.416* & 0.014 & 1.554*  & 0.057 \\
+      & $\alpha_1$ & 0.041* & 0.007 & 0.194* & 0.046 \\
+      & $\eta$ & 0.38 & 0.006 & 1.304 & 0.016 \\
+      & $\pi_{i,i}$ &  \multicolumn{2}{c}{90\%} & \multicolumn{2}{c}{67.2\%}\\
+      \hline
+      \multirow{3}{*}[\normalbaselineskip]{Granger-based} & $\alpha_0$ & 0.379* & 0.013 & 1.472*  & 0.047 \\
+      & $\alpha_1$ & 0.009 & 0.007 & 0.205* & 0.032 \\
+      & $\eta$ & 0.356 & 0.006 & 1.161 & 0.013 \\
+      & $\pi_{i,i}$ &  \multicolumn{2}{c}{87.4\%} & \multicolumn{2}{c}{65\%}\\
+      \hline
+    \multicolumn{6}{l}{\footnotesize * coefficient with 5\% statistical significance} \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}
+  \caption{Models for EU banking sector and rolling window of 252 trading days (year)}
+  \begin{tabular}{cccccc}
+    \toprule
+     Connectedness measure &  & \multicolumn{2}{c}{\bfseries Regime 1} & \multicolumn{2}{c}{\bfseries Regime 2}  \\
+     %\cmidrule(lr){1-6}
+     \hline
+     & & Estimate & S.E. & Estimate & S.E. \\
+     \hline
+     \multirow{3}{*}[\normalbaselineskip]{Correlation-based} & $\alpha_0$ & 0.402* & 0.013 & 1.517*  & 0.054 \\
+      & $\alpha_1$ & 0.027* & 0.007 & 0.239* & 0.044 \\
+      & $\eta$ & 0.373 & 0.007 & 1.268 & 0.017 \\
+      & $\pi_{i,i}$ &  \multicolumn{2}{c}{89.4\%} & \multicolumn{2}{c}{67\%}\\
+      \hline
+      \multirow{3}{*}[\normalbaselineskip]{Eigenvalue-based} & $\alpha_0$ & 0.416* & 0.014 & 1.554*  & 0.057 \\
+      & $\alpha_1$ & 0.041* & 0.007 & 0.194* & 0.046 \\
+      & $\eta$ & 0.38 & 0.006 & 1.304 & 0.016 \\
+      & $\pi_{i,i}$ &  \multicolumn{2}{c}{90\%} & \multicolumn{2}{c}{67.2\%}\\
+      \hline
+      \multirow{3}{*}[\normalbaselineskip]{Granger-based} & $\alpha_0$ & 0.379* & 0.013 & 1.472*  & 0.047 \\
+      & $\alpha_1$ & 0.009 & 0.007 & 0.205* & 0.032 \\
+      & $\eta$ & 0.356 & 0.006 & 1.161 & 0.013 \\
+      & $\pi_{i,i}$ &  \multicolumn{2}{c}{87.4\%} & \multicolumn{2}{c}{65\%}\\
+      \hline
+    \multicolumn{6}{l}{\footnotesize * coefficient with 5\% statistical significance} \\
+    \hline
+  \end{tabular}
+\end{table}
 
 
 \bibliography{sample}

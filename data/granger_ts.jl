@@ -8,10 +8,11 @@
 @time using Tables
 @time using Plots
 
+
 cor_w = 252
 
 run(`python data/granger_ts.py
-    --region eu
+    --region us
     --freq daily`) # daily or weekly
 
 replace(x, to) = ismissing(x) ? to : x

@@ -15,7 +15,7 @@ using Plots
 # download data
 # args: region us/eu, freq weekly/daily
 run(`python data/stocks_download.py
-    --region eu
+    --region us
     --freq daily
     --cor_window 252
     --eig_k 1
@@ -78,7 +78,7 @@ summary_msm(model)
 
 
 plot_ts = Matrix(dropmissing(data[:, ["cor_lw", "eig", "granger"]]))
-
+cor(plot_ts)
 
 p1 = plot(standard(plot_ts[:,1]), title = "correlation-based") 
 p3 = plot(standard(plot_ts[:,2]), title = "eigen-based") 
@@ -106,7 +106,7 @@ plot(ed, label = ["Calm market conditions" "Volatile market conditions"],
 
 mean(expected_duration(model), dims = 1)
 
-plot(smoothed_probs(model)[end-500:end,:],
+plot(smoothed_probs(model)[1:500,],
          label     = ["Calm market conditions" "Volatile market conditions"],
          title     = "Regime probabilities", 
          linewidth = 0.5,

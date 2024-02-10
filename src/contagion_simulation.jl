@@ -5,7 +5,6 @@ using Plots
 using CSV
 using DataFrames
 using DataFramesMeta 
-import HypothesisTests: OneSampleTTest
 using Plots
 
 # cioe
@@ -16,6 +15,7 @@ include("risk_heterogeneity.jl")
 include("optim_alloc_nlopt.jl")
 #include("optim_alloc_jump.jl")
 
+
 d = [(606/1.06), (807/1.5), (529/1.08), (211/0.7), (838/1.47), (296/0.63), (250/0.68), (428/2), (284/1.24), (40/0.94), (8.2/0.2), (252/1.74), (24/0.19), (111.1/1.03), (88.9/1.3), (51.8/0.42), (63/0.48), (111.1/1.65), (100/1.37), (11.6/0.15)] # rand(Normal(700, 100), N) # deposits
 e = [55.6, 90.0, 48.5, 53.0, 81.0, 53.0, 57.0, 48.0, 26.0, 43.0, 20.0, 23.0, 16.0, 10.0, 8.0, 5.0, 6.0, 10.0, 9.0, 9.0] #rand(Normal(50, 20), N) # equity
 
@@ -25,8 +25,8 @@ bs = sort(bs ./ 1_000_000, rev = true)
 d = bs[:, 2]
 e = bs[:, 1]#bs[1:5:50, 1]
 
-n_sim = 10
-σ_ss_params = [-3.8,-4.0]#-collect(0:0.1:6.0)
+n_sim = 50
+σ_ss_params = -collect(3.8:0.1:4.2)#-collect(0:0.1:6.0)
 σ_params = [4.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
@@ -135,7 +135,7 @@ end
 
 
 plot_df = @chain results begin
-    #transform(:σ_ss => x -> round.(x), renamecols = false)
+    transform(:σ_ss => x -> round.(x, digits=1), renamecols = false)
     groupby([:σ_ss])
     #combine(:n_default => x -> sum(x .> 9)/sum(x .> 0))
     combine(:n_default => mean)
@@ -143,7 +143,7 @@ plot_df = @chain results begin
     #unstack(:σ, :n_default_mean)
 end
 
-plot_df[10:30,:]
+plot_df[1:30,:]
 
 plot(plot_df[:,1], plot_df[:,2])
 

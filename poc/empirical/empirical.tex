@@ -8,6 +8,7 @@
 \usepackage{caption}
 \usepackage{multirow}
 \usepackage{float}
+\usepackage{authblk}
 \usepackage{booktabs,siunitx}
 \sisetup{%
   output-decimal-marker={,},
@@ -18,7 +19,8 @@ pdfborder={0 0 0},
 }
 \title{Systemic risk and financial connectedness: empirical evidence}
 \bibliographystyle{apalike}
-\author{Mateusz Dadej}
+\author[1]{Mateusz Dadej}
+\affil[1]{Phd student at Università degli Studi di Brescia, Visiting Schoolar at Universität Mannheim}
 \date{\today}
 
 \begin{document}
@@ -90,7 +92,7 @@ Then the measure of granger connectedness is defined as:
 
 \[\frac{\sum_{i \neq j}^{N} \sum_{j \neq i}^{N} G_{i,j}}{ N \times (N-1)}\]
 
-The last two of the above connectedness measures are as described in \citet{billio}.
+The last two of the above connectedness measures are as described in \citet{billio}, additionally providing a more extensive analysis of their properties.
 
 \subsection*{Modeling the regime-dependent effect of connectedness}
 

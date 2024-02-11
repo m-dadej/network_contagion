@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.3)  11 JAN 2024 15:51
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.3)  30 JAN 2024 19:48
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -275,6 +275,13 @@ Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
 \multirow@cntb=\count294
 \multirow@dima=\skip60
 \bigstrutjot=\dimen164
+) (c:/texlive/2022/texmf-dist/tex/latex/preprint/authblk.sty
+Package: authblk 2001/02/27 1.3 (PWD)
+\affilsep=\skip61
+\@affilsep=\skip62
+\c@Maxaffil=\count295
+\c@authors=\count296
+\c@affil=\count297
 ) (c:/texlive/2022/texmf-dist/tex/latex/booktabs/booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \heavyrulewidth=\dimen165
@@ -287,32 +294,32 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \cmidrulesep=\dimen172
 \cmidrulekern=\dimen173
 \defaultaddspace=\dimen174
-\@cmidla=\count295
-\@cmidlb=\count296
+\@cmidla=\count298
+\@cmidlb=\count299
 \@aboverulesep=\dimen175
 \@belowrulesep=\dimen176
-\@thisruleclass=\count297
-\@lastruleclass=\count298
+\@thisruleclass=\count300
+\@lastruleclass=\count301
 \@thisrulewidth=\dimen177
 ) (c:/texlive/2022/texmf-dist/tex/latex/siunitx/siunitx.sty
 Package: siunitx 2022-12-05 v3.1.11 A comprehensive (SI) units package
 \l__siunitx_angle_tmp_dim=\dimen178
 \l__siunitx_angle_marker_box=\box55
 \l__siunitx_angle_unit_box=\box56
-\l__siunitx_compound_count_int=\count299
+\l__siunitx_compound_count_int=\count302
  (c:/texlive/2022/texmf-dist/tex/latex/translations/translations.sty
 Package: translations 2022/02/05 v1.12 internationalization of LaTeX2e packages (CN)
  (c:/texlive/2022/texmf-dist/tex/latex/etoolbox/etoolbox.sty
 Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count300
+\etb@tempcnta=\count303
 ))
-\l__siunitx_number_exponent_fixed_int=\count301
-\l__siunitx_number_min_decimal_int=\count302
-\l__siunitx_number_min_integer_int=\count303
-\l__siunitx_number_round_precision_int=\count304
-\l__siunitx_number_group_first_int=\count305
-\l__siunitx_number_group_size_int=\count306
-\l__siunitx_number_group_minimum_int=\count307
+\l__siunitx_number_exponent_fixed_int=\count304
+\l__siunitx_number_min_decimal_int=\count305
+\l__siunitx_number_min_integer_int=\count306
+\l__siunitx_number_round_precision_int=\count307
+\l__siunitx_number_group_first_int=\count308
+\l__siunitx_number_group_size_int=\count309
+\l__siunitx_number_group_minimum_int=\count310
 \l__siunitx_table_tmp_box=\box57
 \l__siunitx_table_tmp_dim=\dimen179
 \l__siunitx_table_column_width_dim=\dimen180
@@ -322,58 +329,58 @@ Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
 \l__siunitx_table_after_box=\box61
 \l__siunitx_table_before_dim=\dimen181
 \l__siunitx_table_carry_dim=\dimen182
-\l__siunitx_unit_tmp_int=\count308
-\l__siunitx_unit_position_int=\count309
-\l__siunitx_unit_total_int=\count310
+\l__siunitx_unit_tmp_int=\count311
+\l__siunitx_unit_position_int=\count312
+\l__siunitx_unit_total_int=\count313
  (c:/texlive/2022/texmf-dist/tex/latex/tools/array.sty
 Package: array 2022/09/04 v2.5g Tabular extension package (FMi)
 \col@sep=\dimen183
 \ar@mcellbox=\box62
 \extrarowheight=\dimen184
 \NC@list=\toks25
-\extratabsurround=\skip61
-\backup@length=\skip62
+\extratabsurround=\skip63
+\backup@length=\skip64
 \ar@cellbox=\box63
 ))
-Package hyperref Info: Option `colorlinks' set `false' on input line 18.
-Package translations Info: No language package found. I am going to use `english' as default language. on input line 24.
+Package hyperref Info: Option `colorlinks' set `false' on input line 19.
+Package translations Info: No language package found. I am going to use `english' as default language. on input line 26.
  (c:/texlive/2022/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2022-10-26 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count311
+\l__color_backend_stack_int=\count314
 \l__pdf_internal_box=\box64
 ) (./empirical.aux)
 \openout1 = `empirical.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 26.
+LaTeX Font Info:    ... okay on input line 26.
  (c:/texlive/2022/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count312
+\scratchcounter=\count315
 \scratchdimen=\dimen185
 \scratchbox=\box65
-\nofMPsegments=\count313
-\nofMParguments=\count314
+\nofMPsegments=\count316
+\nofMParguments=\count317
 \everyMPshowfont=\toks26
-\MPscratchCnt=\count315
+\MPscratchCnt=\count318
 \MPscratchDim=\dimen186
-\MPnumerator=\count316
-\makeMPintoPDFobject=\count317
+\MPnumerator=\count319
+\makeMPintoPDFobject=\count320
 \everyMPtoPDFconversion=\toks27
 ) (c:/texlive/2022/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -381,7 +388,7 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
  (c:/texlive/2022/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-Package hyperref Info: Link coloring OFF on input line 24.
+Package hyperref Info: Link coloring OFF on input line 26.
  (./empirical.out) (./empirical.out)
 \@outlinefile=\write3
 \openout3 = `empirical.out'.
@@ -397,29 +404,29 @@ Package color Info: Driver file: pdftex.def on input line 149.
  (c:/texlive/2022/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (c:/texlive/2022/texmf-dist/tex/latex/translations/translations-basic-dictionary-english.trsl
 File: translations-basic-dictionary-english.trsl (english translation file `translations-basic-dictionary')
 )
-Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 24.
+Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 26.
  [1
 
 {c:/texlive/2022/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3]
-<connectmeasures.png, id=60, 602.25pt x 602.25pt>
+<connectmeasures.png, id=61, 602.25pt x 602.25pt>
 File: connectmeasures.png Graphic file (type png)
 <use connectmeasures.png>
-Package pdftex.def Info: connectmeasures.png  used on input line 130.
+Package pdftex.def Info: connectmeasures.png  used on input line 132.
 (pdftex.def)             Requested size: 301.12425pt x 301.12425pt.
  [4] [5 <./connectmeasures.png>] [6] [7] (./empirical.bbl) [8] (./empirical.aux)
 Package rerunfilecheck Info: File `empirical.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 15272 strings out of 476093
- 297407 string characters out of 5795584
+ 15362 strings out of 476093
+ 298687 string characters out of 5795584
  1875787 words of memory out of 5000000
- 35464 multiletter control sequences out of 15000+600000
+ 35550 multiletter control sequences out of 15000+600000
  518635 words of font info for 54 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 72i,10n,77p,693b,885s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 72i,10n,77p,693b,883s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><c:/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on empirical.pdf (8 pages, 277693 bytes).
+Output written on empirical.pdf (8 pages, 280923 bytes).
 PDF statistics:
  161 PDF objects out of 1000 (max. 8388607)
  120 compressed objects within 2 object streams

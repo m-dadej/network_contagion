@@ -45,7 +45,7 @@ results = DataFrame(σ             = Float64[],
                     mean_eq_req   = Float64[],
                     mean_n_share  = Float64[])
 
-for σ_ss in σ_ss_params
+for σ_ss in σ_ss_params 
     for σ in σ_params
         for sim in 1:n_sim
             seed = rand(1:10000000000)

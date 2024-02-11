@@ -1,5 +1,5 @@
 using Pkg
-#Pkg.add.(["DataFramesMeta", "Plots", "DelimitedFiles", "CSV", "DataFrames"])
+Pkg.add.(["DataFramesMeta", "Plots", "DelimitedFiles", "CSV", "DataFrames"])
 using DelimitedFiles
 using Plots
 using CSV

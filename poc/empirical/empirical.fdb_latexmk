@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex empirical"] 1704984353 "empirical.aux" "empirical.bbl" "empirical" 1706640529 0
+["bibtex empirical"] 1704984353 "empirical.aux" "empirical.bbl" "empirical" 1708346776 0
   "./sample.bib" 1704906815 3957 7e4840b75b99063f205e63d9288c6a99 ""
   "c:/texlive/2022/texmf-dist/bibtex/bst/base/apalike.bst" 1672763745 24635 604dafcc79f521a11ea73e506e1fbd98 ""
-  "empirical.aux" 1706640526 2174 232f90da56d5b9c5bcbea0c06fd8c090 "pdflatex"
+  "empirical.aux" 1708346773 2174 232f90da56d5b9c5bcbea0c06fd8c090 "pdflatex"
   (generated)
   "empirical.bbl"
   "empirical.blg"
   (rewritten before read)
-["pdflatex"] 1706640522 "c:/Users/HP/Documents/julia/finansowe/contagion/poc/empirical/empirical.tex" "empirical.pdf" "empirical" 1706640529 0
+["pdflatex"] 1708346770 "c:/Users/HP/Documents/julia/finansowe/contagion/poc/empirical/empirical.tex" "empirical.pdf" "empirical" 1708346776 0
   "c:/Users/HP/Documents/julia/finansowe/contagion/poc/empirical/empirical.tex" 1706640517 15901 4f1371a4047e2170a95179094d746380 ""
   "c:/texlive/2022/texmf-dist/fonts/map/fontname/texfonts.map" 1672766171 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2022/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1672762986 1004 54797486969f23fa377b128694d548df ""
@@ -112,9 +112,9 @@
   "c:/texlive/2022/texmf-var/web2c/pdftex/pdflatex.fmt" 1672773247 7874737 ee73987c7560f0bb578672bea1dcd0f0 ""
   "c:/texlive/2022/texmf.cnf" 1672772965 713 e69b156964470283e0530f5060668171 ""
   "connectmeasures.png" 1704916368 93494 f2d512f995ff50cd607b78b52c256742 ""
-  "empirical.aux" 1706640526 2174 232f90da56d5b9c5bcbea0c06fd8c090 "pdflatex"
+  "empirical.aux" 1708346773 2174 232f90da56d5b9c5bcbea0c06fd8c090 "pdflatex"
   "empirical.bbl" 1704984354 1901 8cf7aac93e2e277f0321084505679b90 "bibtex empirical"
-  "empirical.out" 1706640526 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "empirical.out" 1708346772 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
   "empirical.tex" 1706640517 15901 4f1371a4047e2170a95179094d746380 ""
   (generated)
   "empirical.aux"

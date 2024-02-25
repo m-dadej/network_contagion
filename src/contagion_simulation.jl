@@ -133,6 +133,7 @@ for σ_ss in σ_ss_params
     end
 end
 
+CSV.write("data/results_done.csv", results)
 
 plot_df = @chain results begin
     transform(:σ_ss => x -> round.(x, digits=1), renamecols = false)
@@ -163,7 +164,7 @@ end
 
 results.eq_r_l
 
-CSV.write("data/results_done.csv", results)
+
 
 quantile(results.n_default, [0.5, 0.75, 0.8, 0.9, 0.95, 0.99, 1.0])
 

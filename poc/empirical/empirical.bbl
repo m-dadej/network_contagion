@@ -17,26 +17,27 @@ Acemoglu, D., Ozdaglar, A., and Tahbaz-Salehi, A. (2015).
 
 \bibitem[Billio et~al., 2012]{billio}
 Billio, M., Getmansky, M., Lo, A.~W., and Pelizzon, L. (2012).
-\newblock Econometric measures of connectedness and systemic risk in the
-  finance and insurance sectors.
+\newblock Econometric measures of connectedness and systemic risk in the finance and insurance sectors.
 \newblock {\em Journal of Financial Economics}, 104:535--559.
 
 \bibitem[Callaway et~al., 2006]{callaway}
 Callaway, D.~S., Newman, M., Strogatz, S.~H., and Watts, D.~J. (2006).
-\newblock {\em Network Robustness and Fragility: Percolation on Random Graphs},
-  pages 510--513.
+\newblock {\em Network Robustness and Fragility: Percolation on Random Graphs}, pages 510--513.
 \newblock Princeton University Press, Princeton.
+
+\bibitem[Elliott et~al., 2014]{golub}
+Elliott, M., Golub, B., and Jackson, M.~O. (2014).
+\newblock Financial networks and contagion.
+\newblock {\em American Economic Review}, 104(10):3115--53.
 
 \bibitem[Gai and Kapadia, 2010]{gai}
 Gai, P. and Kapadia, S. (2010).
 \newblock Contagion in financial networks.
-\newblock {\em Proceedings of the Royal Society A: Mathematical, Physical and
-  Engineering Sciences}, 466(2120):2401--2423.
+\newblock {\em Proceedings of the Royal Society A: Mathematical, Physical and Engineering Sciences}, 466(2120):2401--2423.
 
 \bibitem[Granger, 1969]{granger}
 Granger, C. W.~J. (1969).
-\newblock Investigating causal relations by econometric models and
-  cross-spectral methods.
+\newblock Investigating causal relations by econometric models and cross-spectral methods.
 \newblock {\em Econometrica}, 37(3):424--438.
 
 \bibitem[Haldane, 2009]{haldane}

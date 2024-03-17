@@ -26,7 +26,7 @@ d = bs[:, 2]
 e = bs[:, 1]#bs[1:5:50, 1]
 
 n_sim = 50
-σ_ss_params = -collect(3.8:0.1:4.2)#-collect(0:0.1:6.0)
+σ_ss_params = -collect(0:0.1:6.0) #-collect(3.8:0.1:4.2)#-collect(0:0.1:6.0)
 σ_params = [4.0] .+ 0.001
 
 n_sim*length(σ_ss_params)*length(σ_params)
@@ -132,6 +132,11 @@ for σ_ss in σ_ss_params
         end
     end
 end
+
+results
+results_new = deepcopy(results)
+
+results = [results; results_new]
 
 CSV.write("data/results_done.csv", results)
 

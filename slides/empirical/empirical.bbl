@@ -1,0 +1,233 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nyt/global//global/global}
+    \entry{acemoglu}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=d849e6f8de178bfb18aa67341c9f8d38}{%
+           family={Acemoglu},
+           familyi={A\bibinitperiod},
+           given={Daron},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=f265f26cb985781081b85b9fe4401795}{%
+           family={Ozdaglar},
+           familyi={O\bibinitperiod},
+           given={Asuman},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=36f43dd3d18c58095e5aa6bbc89a670c}{%
+           family={Tahbaz-Salehi},
+           familyi={T\bibinithyphendelim S\bibinitperiod},
+           given={Alireza},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{d472b5a989368fde27e73478482fa574}
+      \strng{fullhash}{d472b5a989368fde27e73478482fa574}
+      \strng{bibnamehash}{d472b5a989368fde27e73478482fa574}
+      \strng{authorbibnamehash}{d472b5a989368fde27e73478482fa574}
+      \strng{authornamehash}{d472b5a989368fde27e73478482fa574}
+      \strng{authorfullhash}{d472b5a989368fde27e73478482fa574}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{American Economic Review}
+      \field{month}{2}
+      \field{number}{2}
+      \field{title}{Systemic Risk and Stability in Financial Networks}
+      \field{volume}{105}
+      \field{year}{2015}
+      \field{pages}{564\bibrangedash 608}
+      \range{pages}{45}
+      \verb{doi}
+      \verb 10.1257/aer.20130456
+      \endverb
+      \verb{urlraw}
+      \verb https://www.aeaweb.org/articles?id=10.1257/aer.20130456
+      \endverb
+      \verb{url}
+      \verb https://www.aeaweb.org/articles?id=10.1257/aer.20130456
+      \endverb
+    \endentry
+    \entry{billio}{article}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=1f179a20f9a66a66ff4db7709baf4680}{%
+           family={Billio},
+           familyi={B\bibinitperiod},
+           given={Monica},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=d28a75398f89902f04f9c3d47aa25785}{%
+           family={Getmansky},
+           familyi={G\bibinitperiod},
+           given={Mila},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=3991aad95c3885c82267fa604f5bbe20}{%
+           family={Lo},
+           familyi={L\bibinitperiod},
+           given={Andrew\bibnamedelima W.},
+           giveni={A\bibinitperiod\bibinitdelim W\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=545c476a8cf8f1fc2e029a3b99da679d}{%
+           family={Pelizzon},
+           familyi={P\bibinitperiod},
+           given={Loriana},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier}%
+      }
+      \strng{namehash}{51411aa37cb7ed52035b68aefb24f7f9}
+      \strng{fullhash}{c40641d96750d6067cf06116cf93914b}
+      \strng{bibnamehash}{51411aa37cb7ed52035b68aefb24f7f9}
+      \strng{authorbibnamehash}{51411aa37cb7ed52035b68aefb24f7f9}
+      \strng{authornamehash}{51411aa37cb7ed52035b68aefb24f7f9}
+      \strng{authorfullhash}{c40641d96750d6067cf06116cf93914b}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Financial Economics}
+      \field{title}{Econometric measures of connectedness and systemic risk in the finance and insurance sectors}
+      \field{volume}{104}
+      \field{year}{2012}
+      \field{pages}{535\bibrangedash 559}
+      \range{pages}{25}
+    \endentry
+    \entry{granger}{article}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=90c4f36411724ec312077a54a0f71d60}{%
+           family={Granger},
+           familyi={G\bibinitperiod},
+           given={C.\bibnamedelimi W.\bibnamedelimi J.},
+           giveni={C\bibinitperiod\bibinitdelim W\bibinitperiod\bibinitdelim J\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {[Wiley, Econometric Society]}%
+      }
+      \strng{namehash}{90c4f36411724ec312077a54a0f71d60}
+      \strng{fullhash}{90c4f36411724ec312077a54a0f71d60}
+      \strng{bibnamehash}{90c4f36411724ec312077a54a0f71d60}
+      \strng{authorbibnamehash}{90c4f36411724ec312077a54a0f71d60}
+      \strng{authornamehash}{90c4f36411724ec312077a54a0f71d60}
+      \strng{authorfullhash}{90c4f36411724ec312077a54a0f71d60}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{There occurs on some occasions a difficulty in deciding the direction of causality between two related variables and also whether or not feedback is occurring. Testable definitions of causality and feedback are proposed and illustrated by use of simple two-variable models. The important problem of apparent instantaneous causality is discussed and it is suggested that the problem often arises due to slowness in recording information or because a sufficiently wide class of possible causal variables has not been used. It can be shown that the cross spectrum between two variables can be decomposed into two parts, each relating to a single causal arm of a feedback situation. Measures of causal lag and causal strength can then be constructed. A generalisation of this result with the partial cross spectrum is suggested.}
+      \field{issn}{00129682, 14680262}
+      \field{journaltitle}{Econometrica}
+      \field{number}{3}
+      \field{title}{Investigating Causal Relations by Econometric Models and Cross-spectral Methods}
+      \field{urlday}{9}
+      \field{urlmonth}{1}
+      \field{urlyear}{2024}
+      \field{volume}{37}
+      \field{year}{1969}
+      \field{urldateera}{ce}
+      \field{pages}{424\bibrangedash 438}
+      \range{pages}{15}
+      \verb{urlraw}
+      \verb http://www.jstor.org/stable/1912791
+      \endverb
+      \verb{url}
+      \verb http://www.jstor.org/stable/1912791
+      \endverb
+    \endentry
+    \entry{haldane}{misc}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=fb82099a99d20d9c804076486aa84fe9}{%
+           family={Haldane},
+           familyi={H\bibinitperiod},
+           given={Andrew\bibnamedelima G.},
+           giveni={A\bibinitperiod\bibinitdelim G\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{fb82099a99d20d9c804076486aa84fe9}
+      \strng{fullhash}{fb82099a99d20d9c804076486aa84fe9}
+      \strng{bibnamehash}{fb82099a99d20d9c804076486aa84fe9}
+      \strng{authorbibnamehash}{fb82099a99d20d9c804076486aa84fe9}
+      \strng{authornamehash}{fb82099a99d20d9c804076486aa84fe9}
+      \strng{authorfullhash}{fb82099a99d20d9c804076486aa84fe9}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{4}
+      \field{note}{Speech delivered at the Financial Student Association, Amsterdam}
+      \field{title}{Rethinking the financial network}
+      \field{year}{2009}
+      \verb{urlraw}
+      \verb https://www.bankofengland.co.uk/speech/2009/rethinking-the-financial-network
+      \endverb
+      \verb{url}
+      \verb https://www.bankofengland.co.uk/speech/2009/rethinking-the-financial-network
+      \endverb
+    \endentry
+    \entry{ledoit}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=e98821837b14867718e6d02fdd00754b}{%
+           family={Ledoit},
+           familyi={L\bibinitperiod},
+           given={Olivier},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=aba96a4246f521dcd0f7b0b6c402b9fc}{%
+           family={Wolf},
+           familyi={W\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{fullhash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{bibnamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authorbibnamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authornamehash}{ce321f123471e4f23ec245fdfceee685}
+      \strng{authorfullhash}{ce321f123471e4f23ec245fdfceee685}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{UPF economics and business working paper}
+      \field{number}{691}
+      \field{title}{Honey, I shrunk the sample covariance matrix}
+      \field{year}{2003}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

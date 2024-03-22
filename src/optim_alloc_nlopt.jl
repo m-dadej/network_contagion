@@ -12,7 +12,7 @@ function utility(x::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T
     #prof = max(prof, 0) # otherwise we have a domain error
     σ_prof = (x[2]^2 * bank.σ_rn + x[3]^2 * bank.σ_rn) - (x[4] * bank_sys.r_l)^2 * bank_sys.ζ^2 * (1 - (bank_sys.ζ * bank_sys.exp_δ))^(-4) * bank_sys.σ_δ
     #σ_prof = (x[2]^2 * bank.σ_rn) - (x[4] * bank_sys.r_l)^2 * bank_sys.ζ^2 * (1 - (bank_sys.ζ * bank_sys.exp_δ))^(-4) * bank_sys.σ_δ
-    return (((prof - bank.roa_target)^(1-bank.σ)) / (1-bank.σ)) - ((bank.σ/2)*prof^(-(1+bank.σ))) * σ_prof
+    return (((prof - bank.roa_target)^(1-bank.σ)) / (1-bank.σ)) - ((bank.σ/2)*(prof - bank.roa_target)^(-(1+bank.σ))) * σ_prof
 end
 
 # # utility with roe target
@@ -84,7 +84,7 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     opt              = Opt(:LD_SLSQP, 4) # LN_COBYLA, LD_LBFGS or LD_SLSQP
     opt.lower_bounds = [0.0, 0.0, 0.0, 0.0]
     opt.xtol_abs     = 1 / 1_000_000 
-    opt.maxtime      = Inf
+    opt.maxtime      = 10
 
     opt.min_objective = (x, fΔ) -> obj_f(x, fΔ, bank, bank_sys)
     equality_constraint!(opt,   (x, fΔ_bs) ->  bs_equality(x, fΔ_bs, bank))

@@ -1,5 +1,5 @@
 using Pkg
-Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
+#Pkg.add.(["Distributions", "MarSwitching", "JuMP", "Ipopt", "NLopt", "HiGHS", "ForwardDiff"])
 using Random
 using Distributions
 #using Plots
@@ -23,6 +23,7 @@ mutable struct Bank{V <: AbstractFloat}
     b::V                # interbank liabilities
     # preference params
     σ::V                # risk aversion
+    roa_target::V       # expected profit
     const σ_rn::V       # variance of return on non-liquid assets
 end
 
@@ -52,7 +53,7 @@ function Base.show(io::IO, ::MIME"text/plain", banks::Vector{Bank})
               d = [round(bank.d) for bank in banks])) 
 end  
 
-exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
+#exp_utility(exp_profit, σ_profit, σ) = ((exp_profit)^(1-σ))/(1 - σ) - (((σ/2)*(exp_profit)^(-(1+σ))) * σ_profit)
 
 function exp_utility(bank::Bank, bank_system::BankSystem)
     exp_profit = profit(bank, bank_system)

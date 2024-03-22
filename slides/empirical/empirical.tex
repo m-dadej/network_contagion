@@ -48,7 +48,7 @@
 
 \end{frame}    
 
-\begin{frame}{Connectedness measures}
+\begin{frame}{Connectedness measures - denoted $\kappa_t$}
 
 \begin{itemize}
     \item Average correlation: $\frac{\sum_{i \neq i}^{N} \sum_{j \neq j}^{N} \rho_{i,j}(R)}{N^2-N}$,  with $\rho(\cdot)$ being the Ledoit-Wolf estimator of the covariance matrix (\cite{ledoit}).
@@ -82,7 +82,7 @@
 
 Mean specification of the model: 
 
-$$\mu_{i,t} = \beta_0 + \underbrace{\beta_1 r_{b,t-1}}_{\text{Banking index}} + \underbrace{\beta_1 r_{m,t-1}}_{\text{Broad market index}} + \epsilon_t$$
+$$r_{b,t} = \beta_0 + \underbrace{\beta_1 r_{b,t-1}}_{\text{Banking index}} + \underbrace{\beta_2 r_{m,t-1}}_{\text{Broad market index}} + \epsilon_t$$
 
 The Markov-switching ARCH specification is:
 

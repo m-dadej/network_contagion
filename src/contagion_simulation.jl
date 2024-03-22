@@ -1,5 +1,5 @@
 using Pkg
-Pkg.add.(["DataFramesMeta", "Plots", "DelimitedFiles", "CSV", "DataFrames"])
+#Pkg.add.(["DataFramesMeta", "Plots", "DelimitedFiles", "CSV", "DataFrames"])
 using DelimitedFiles
 using Plots
 using CSV
@@ -25,7 +25,7 @@ bs = sort(bs ./ 1_000_000, rev = true)
 d = bs[:, 2]
 e = bs[:, 1]#bs[1:5:50, 1]
 
-n_sim = 50
+n_sim = 1
 σ_ss_params = -collect(0:0.1:6.0) #-collect(3.8:0.1:4.2)#-collect(0:0.1:6.0)
 σ_params = [4.0] .+ 0.001
 

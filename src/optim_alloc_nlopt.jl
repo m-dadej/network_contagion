@@ -12,7 +12,7 @@ function utility(x::AbstractVector{T}, bank::Bank, bank_sys::BankSystem) where T
     #prof = max(prof, 0) # otherwise we have a domain error
     σ_prof = (x[2]^2 * bank.σ_rn + x[3]^2 * bank.σ_rn) - (x[4] * bank_sys.r_l)^2 * bank_sys.ζ^2 * (1 - (bank_sys.ζ * bank_sys.exp_δ))^(-4) * bank_sys.σ_δ
     #σ_prof = (x[2]^2 * bank.σ_rn) - (x[4] * bank_sys.r_l)^2 * bank_sys.ζ^2 * (1 - (bank_sys.ζ * bank_sys.exp_δ))^(-4) * bank_sys.σ_δ
-    return (((prof - bank.roa_target)^(1-bank.σ)) / (1-bank.σ)) - ((bank.σ/2)*(prof - bank.roa_target)^(-(1+bank.σ))) * σ_prof
+    return (((prof - bank.target)^(1-bank.σ)) / (1-bank.σ)) - ((bank.σ/2)*(prof - bank.target)^(-(1+bank.σ))) * σ_prof
 end
 
 # # utility with roe target
@@ -22,7 +22,7 @@ end
 #     σ_prof = ((x[2] / assets)^2 * (1 / assets)^2 * bank.σ_rn ) - ((x[4] * bank_sys.r_l) / assets)^2 * (1/assets)^2 * cost_var
 #     profit = (bank.r_n * x[2] + bank_sys.r_l * x[3]) - ((1 /(1 - bank_sys.ζ * bank_sys.exp_δ)) * bank_sys.r_l * x[4])
 #     #profit = max(profit, 0) # otherwise we have a domain error
-#     profit = (profit / assets) - bank.roa_target
+#     profit = (profit / assets) - bank.target
 
 #     return ((profit)^(1 - bank.σ))/(1 - bank.σ) - (((bank.σ / 2) * (profit)^(-(1 + bank.σ))) * σ_prof)
 # end
@@ -84,7 +84,7 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
     opt              = Opt(:LD_SLSQP, 4) # LN_COBYLA, LD_LBFGS or LD_SLSQP
     opt.lower_bounds = [0.0, 0.0, 0.0, 0.0]
     opt.xtol_abs     = 1 / 1_000_000 
-    opt.maxtime      = 10
+    opt.maxtime      = 5
 
     opt.min_objective = (x, fΔ) -> obj_f(x, fΔ, bank, bank_sys)
     equality_constraint!(opt,   (x, fΔ_bs) ->  bs_equality(x, fΔ_bs, bank))
@@ -102,10 +102,9 @@ function optim_allocation!(bank::Bank, bank_sys::BankSystem)
 
     (minf,minx,ret) = optimize(opt, x0)
 
-    ret == :FORCED_STOP && error("NLopt status: :FORCED_STOP")
+    ret == :FORCED_STOP && obj_f(x0, [0.0, 0.0, 0.0, 0.0], bank, bank_sys)#error("NLopt status: :FORCED_STOP")
     bank.c = minx[1]
     bank.n = minx[2]
     bank.l = minx[3]
     bank.b = minx[4]
-    println(ret)
 end

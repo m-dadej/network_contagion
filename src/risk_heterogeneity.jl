@@ -23,7 +23,7 @@ mutable struct Bank{V <: AbstractFloat}
     b::V                # interbank liabilities
     # preference params
     σ::V                # risk aversion
-    roa_target::V       # expected profit
+    target::V       # expected profit
     const σ_rn::V       # variance of return on non-liquid assets
 end
 
@@ -122,16 +122,28 @@ intermediators(bank_sys::BankSystem) = findall(x -> (x.l > 2) & (x.b > 2), bank_
 equity_requirement(bank::Bank, bank_system::BankSystem) = (bank.c + (bank.n*bank_system.p_n) + bank.l - bank.d - bank.b)/((bank_system.ω_n * bank.n * bank_system.p_n) + bank_system.ω_l * bank.l)
 equity_requirement(bank_system::BankSystem) = [equity_requirement(bank, bank_system) for bank in bank_system.banks]
 
-function super_spreader!(bank_sys::BankSystem, σ_ss::Float64)
+function super_spreader!(bank_sys::BankSystem, target_ss::Float64)
     N = length(bank_sys.banks)
     super_s = rand(1:N)
     
-    bank_sys.banks[super_s].σ += σ_ss
+    bank_sys.banks[super_s].target += target_ss
     
     for i in 1:N 
-        bank_sys.banks[i].σ -= i == super_s ? 0 : σ_ss/(N-1)   
+        bank_sys.banks[i].target -= i == super_s ? 0 : target_ss/(N-1)   
     end
 end    
+
+function super_greedy(target::Float64, target_ss::Float64, N::Int64)
+    targets = fill(target, N)
+    super_s = rand(1:N)
+    targets[super_s] += target_ss
+
+    for i in 1:N 
+        targets[i] -= i == super_s ? 0 : target_ss/(N-1)   
+    end
+
+    return targets
+end
 
 # function optim_allocation_msg(model)
 
@@ -157,6 +169,7 @@ function populate!(bank_sys::BankSystem;
                    d = Vector{Float64}([]), 
                    e = Vector{Float64}([]), 
                    σ = Vector{Float64}([]), 
+                   target = Vector{Float64}([]),
                    r_n = Vector{Float64}([]))
 
     d = isempty(d) ? rand(Normal(500, 80), N) : d
@@ -166,7 +179,7 @@ function populate!(bank_sys::BankSystem;
     σ_rn  = (1/12).*(maximum(r_n) - minimum(r_n)).^2
 
     for i in 1:N
-        push!(bank_sys.banks, Bank(i, r_n[i], 0.0, 0.0, 0.0, d[i], e[i], 0.0, σ[i], σ_rn))
+        push!(bank_sys.banks, Bank(i, r_n[i], 0.0, 0.0, 0.0, d[i], e[i], 0.0, σ[i], target[i], σ_rn))
     end
 end
 
@@ -199,7 +212,7 @@ function equilibrium!(bank_sys::BankSystem; tol = -1.0, min_iter = 10, verbose =
 
     tol = tol < 0 ? length(bank_sys.banks)*2 : tol
 
-    params = (r_l = [0.1, 0.1], diff = [10000, Inf], up_bound = [0.2], low_bound = [0.0])
+    params = (r_l = [0.15, 0.15], diff = [10e10, Inf], up_bound = [0.3], low_bound = [0.0])
 
     while (abs(params.diff[end]) > tol) && ((abs(params.diff[end] - params.diff[end-1]) > 1) | length(params.diff) < min_iter)
         verbose && println("\n iteration: r_l: ", params.r_l[end], " | imbalance: ", round(params.diff[end])) 
@@ -254,15 +267,19 @@ end
 # end
 
 function fund_matching!(bank_sys::BankSystem, max_expo = 0.1)
+
+    greed = [bank_sys.banks[i].target / profit(bank_sys.banks[i], bank_sys) for i in 1:length(bank_sys.banks)]
+
     bank_sys.A_ib = fund_matching([bank.l for bank in bank_sys.banks],
                                   [bank.b for bank in bank_sys.banks],
                                   [bank.σ for bank in bank_sys.banks], 
                                   ([bank.c / assets(bank, bank_sys) for bank in bank_sys.banks]).^(-1), 
                                   [bank.c + bank.n + bank.l for bank in bank_sys.banks],
-                                  max_expo)
+                                  max_expo,
+                                  greed)
 end
 
-function fund_matching(l, b, σ, k, A, max_expo)
+function fund_matching(l, b, σ, k, A, max_expo, greed)
     
     N = size(l)[1]
     fund_matching_optim = Model(HiGHS.Optimizer)
@@ -291,7 +308,7 @@ function fund_matching(l, b, σ, k, A, max_expo)
     end
     
     #@objective(fund_matching_optim, Max,  sum(σ[i] * (A_ib[i,:]'capital_rate) for i in 1:N))
-    @objective(fund_matching_optim, Min,  sum(σ[i] * (A_ib[i,:]'k) for i in 1:N))
+    @objective(fund_matching_optim, Min,  sum((1 / greed[i]) * (A_ib[i,:]'k) for i in 1:N))
     JuMP.optimize!(fund_matching_optim)
 
     return value.(A_ib)
